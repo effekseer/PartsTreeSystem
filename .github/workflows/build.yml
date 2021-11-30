@@ -16,8 +16,9 @@ jobs:
       - name: CheckFormat
         run: |
          dotnet tool install -g dotnet-format
-         dotnet format --check -f PrefabLike/
-         dotnet format --check -f PrefabLikeTest/
+         dotnet format --check -f PartsTreeSystem/
+         dotnet format --check -f PartsTreeSystemTest/
+         dotnet format --check -f PartsTreeSystemExample/
         shell: sh
 
       - name: Test

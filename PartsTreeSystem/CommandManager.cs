@@ -228,11 +228,11 @@ namespace PartsTreeSystem
 
 		public void RemoveNode(NodeTreeGroup nodeTreeGroup, NodeTree nodeTree, int nodeID, Environment env)
 		{
-			var parentNode = nodeTree.FindParent(nodeID) as INode;
+			var parentNode = nodeTree.FindParent(nodeID);
 			var parentNodeID = parentNode.InstanceID;
 
 			var before = nodeTreeGroup.InternalData.Serialize();
-			if (!nodeTreeGroup.RemoveNode(nodeID))
+			if (!nodeTreeGroup.RemoveNode(nodeID, env))
 			{
 				return;
 			}

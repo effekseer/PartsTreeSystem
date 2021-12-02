@@ -28,6 +28,11 @@ namespace PartsTreeSystem
 			modifications.Add(modification);
 		}
 
+		public void Remove(AccessKeyGroup target)
+		{
+			modifications.RemoveAll(_ => _.Target.Equals(target));
+		}
+
 		public bool ContainTarget(AccessKeyGroup target)
 		{
 			return modifications.Any(_ => _.Target.Equals(target));
@@ -174,103 +179,118 @@ namespace PartsTreeSystem
 			return false;
 		}
 
-		public static void ApplyDifference(ref object target, Difference difference, Asset asset, IAssetInstanceRoot root, Environment env)
+		public static Tuple<List<object>, Type> GetAndCreateObjectHierarchy(ref object target, Modification modification)
 		{
-			foreach (var diff in difference.modifications)
+			var keys = modification.Target.Keys;
+
+			var objects = new List<object>();
+			objects.Add(target);
+
+			Type lastType = null;
+
+			for (int i = 0; i < keys.Length; i++)
 			{
-				var keys = diff.Target.Keys;
+				var key = keys[i];
 
-				var objects = new List<object>();
-				objects.Add(target);
+				var obj = objects[objects.Count - 1];
 
-				//--------------------
-				// 1. Create Instances
-				Type lastType = null;
-
-				for (int i = 0; i < keys.Length; i++)
+				if (key.Name == Consts.Size)
 				{
-					var key = keys[i];
+					lastType = null;
 
-					var obj = objects[objects.Count - 1];
-
-					if (key.Name == Consts.Size)
+					var o = objects[objects.Count - 1];
+					if (o is IList list)
 					{
-						lastType = null;
-
-						var o = objects[objects.Count - 1];
-						if (o is IList list)
+						var count = Convert.ToInt64(modification.Value);
+						if (list.Count > count)
 						{
-							var count = Convert.ToInt64(diff.Value);
-							if (list.Count > count)
-							{
-								list.Clear();
-							}
-
-							while (list.Count < count)
-							{
-								var type = o.GetType().GetGenericArguments()[0];
-								var newValue = CreateDefaultValue(type);
-								list.Add(newValue);
-							}
+							list.Clear();
 						}
 
-						objects.Add(new object());
-
-					}
-					else if (key.Name == Consts.Data)
-					{
-						lastType = null;
-
-						if (objects[objects.Count - 1] is IList list)
+						while (list.Count < count)
 						{
-							lastType = list.GetType().GenericTypeArguments[0];
-
-							var value = GetValueWithIndex(list, key.Index.Value);
-							objects.Add(value);
+							var type = o.GetType().GetGenericArguments()[0];
+							var newValue = CreateDefaultValue(type);
+							list.Add(newValue);
 						}
 					}
-					else
+
+					objects.Add(new object());
+
+				}
+				else if (key.Name == Consts.Data)
+				{
+					lastType = null;
+
+					if (objects[objects.Count - 1] is IList list)
 					{
-						var field = obj.GetType().GetField(key.Name);
+						lastType = list.GetType().GenericTypeArguments[0];
 
-						// not found because a data structure was changed
-						if (field == null)
-						{
-							goto Exit;
-						}
-
-						lastType = field.FieldType;
-
-						var o = field.GetValue(obj);
-
-						// Create an instance if it is an object type.
-						if (o is null)
-						{
-							if (field.FieldType == typeof(string))
-							{
-								// String is an object type, but it can be serialized like a value, so there is no need to create an instance.
-								// (Calling GetConstructor raises an exception)
-							}
-							else if (field.FieldType.IsClass)
-							{
-								o = field.FieldType.GetConstructor(new Type[0]).Invoke(null);
-
-								if (o == null)
-								{
-									goto Exit;
-								}
-
-								field.SetValue(obj, o);
-							}
-							else
-							{
-								goto Exit;
-							}
-						}
-
-						objects.Add(o);
+						var value = GetValueWithIndex(list, key.Index.Value);
+						objects.Add(value);
 					}
 				}
+				else
+				{
+					var field = obj.GetType().GetField(key.Name);
+
+					// not found because a data structure was changed
+					if (field == null)
+					{
+						return null;
+					}
+
+					lastType = field.FieldType;
+
+					var o = field.GetValue(obj);
+
+					// Create an instance if it is an object type.
+					if (o is null)
+					{
+						if (field.FieldType == typeof(string))
+						{
+							// String is an object type, but it can be serialized like a value, so there is no need to create an instance.
+							// (Calling GetConstructor raises an exception)
+						}
+						else if (field.FieldType.IsClass)
+						{
+							o = field.FieldType.GetConstructor(new Type[0]).Invoke(null);
+
+							if (o == null)
+							{
+								return null;
+							}
+
+							field.SetValue(obj, o);
+						}
+						else
+						{
+							return null;
+						}
+					}
+
+					objects.Add(o);
+				}
+			}
+
+			return Tuple.Create(objects, lastType);
+		}
+
+		public static void ApplyDifference(ref object target, Difference difference, Asset asset, IAssetInstanceRoot root, Environment env)
+		{
+			foreach (var modification in difference.modifications)
+			{
+				var keys = modification.Target.Keys;
+
+				var hierarchy = GetAndCreateObjectHierarchy(ref target, modification);
+
+				if (hierarchy == null)
+				{
+					continue;
+				}
+
+				var objects = hierarchy.Item1;
+				var lastType = hierarchy.Item2;
 
 				System.Diagnostics.Debug.Assert(objects.Count - 1 == keys.Length);
 
@@ -278,28 +298,28 @@ namespace PartsTreeSystem
 				{
 					goto Exit;
 				}
-				else if (diff.Value == null)
+				else if (modification.Value == null)
 				{
 					objects[objects.Count - 1] = null;
 				}
 				else if (lastType.GetInterfaces().Contains(typeof(IInstanceID)))
 				{
-					var id = Convert.ToInt32(diff.Value);
+					var id = Convert.ToInt32(modification.Value);
 					objects[objects.Count - 1] = root.FindInstance(id);
 				}
 				else if (lastType.IsSubclassOf(typeof(Asset)))
 				{
-					var path = Convert.ToString(diff.Value);
+					var path = Convert.ToString(modification.Value);
 					objects[objects.Count - 1] = env.GetAsset(path);
 				}
-				else if (diff.Value.GetType() == typeof(System.Numerics.BigInteger))
+				else if (modification.Value.GetType() == typeof(System.Numerics.BigInteger))
 				{
-					var big = (System.Numerics.BigInteger)diff.Value;
+					var big = (System.Numerics.BigInteger)modification.Value;
 					objects[objects.Count - 1] = Convert.ChangeType((UInt64)big, lastType);
 				}
 				else
 				{
-					objects[objects.Count - 1] = Convert.ChangeType(diff.Value, lastType);
+					objects[objects.Count - 1] = Convert.ChangeType(modification.Value, lastType);
 				}
 
 				//--------------------

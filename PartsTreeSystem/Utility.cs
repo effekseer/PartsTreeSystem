@@ -6,6 +6,33 @@ namespace PartsTreeSystem
 {
 	public class Utility
 	{
+		internal static INode CreateNode(NodeTreeGroup nodeTreeGroup, NodeTreeBase nodeTreeBase, Environment env)
+		{
+			INode node = null;
+
+			if (nodeTreeBase.BaseType != null)
+			{
+				var nodeType = env.GetType(nodeTreeBase.BaseType);
+
+				var constructor = nodeType.GetConstructor(Type.EmptyTypes);
+				node = (INode)constructor.Invoke(null);
+			}
+			else if (nodeTreeBase.Template != null)
+			{
+				var path = GetAbsolutePath(env.GetAssetPath(nodeTreeGroup), nodeTreeBase.Template);
+				var baseNodeTreeGroup = env.GetAsset(path) as NodeTreeGroup;
+
+				var nodeTree = CreateNodeFromNodeTreeGroup(baseNodeTreeGroup, env);
+				node = nodeTree.Root;
+			}
+			else
+			{
+				throw new InvalidOperationException();
+			}
+
+			return node;
+		}
+
 		public static string GetRelativePath(string basePath, string path)
 		{
 			Func<string, string> escape = (string s) =>
@@ -60,27 +87,7 @@ namespace PartsTreeSystem
 
 			foreach (var b in nodeTreeGroup.InternalData.Bases)
 			{
-				INode node = null;
-
-				if (b.BaseType != null)
-				{
-					var nodeType = env.GetType(b.BaseType);
-
-					var constructor = nodeType.GetConstructor(Type.EmptyTypes);
-					node = (INode)constructor.Invoke(null);
-				}
-				else if (b.Template != null)
-				{
-					var path = Utility.GetAbsolutePath(env.GetAssetPath(nodeTreeGroup), b.Template);
-					var baseNodeTreeGroup = env.GetAsset(path) as NodeTreeGroup;
-
-					var nodeTree = CreateNodeFromNodeTreeGroup(baseNodeTreeGroup, env);
-					node = nodeTree.Root;
-				}
-				else
-				{
-					throw new InvalidOperationException();
-				}
+				var node = CreateNode(nodeTreeGroup, b, env);
 
 				Action<INode> applyID = null;
 

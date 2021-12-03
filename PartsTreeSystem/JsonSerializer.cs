@@ -23,6 +23,15 @@ namespace PartsTreeSystem
 			return (T)ConvertJsonToCS(typeof(T), token as JToken);
 		}
 
+		static Type RemoveNullable(Type type)
+		{
+			if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+			{
+				return type.GetGenericArguments()[0];
+			}
+			return type;
+		}
+
 		static JToken ConvertCSToJson(object value)
 		{
 			if (value is null)
@@ -98,6 +107,8 @@ namespace PartsTreeSystem
 
 		static object ConvertJsonToCS(Type type, JToken token)
 		{
+			type = RemoveNullable(type);
+
 			if (token is JObject jobj)
 			{
 				var dst = Activator.CreateInstance(type);
@@ -160,23 +171,33 @@ namespace PartsTreeSystem
 					return null;
 				}
 			}
-			else if (token is JToken jtoken)
+			else if (token is JValue jvalue)
 			{
-				if (jtoken.Type == JTokenType.Integer)
+				if (jvalue.Type == JTokenType.Integer)
 				{
-					return Convert.ChangeType(jtoken.Value<object>(), type);
+					if (type == typeof(Byte) ||
+						type == typeof(SByte) ||
+						type == typeof(UInt16) ||
+						type == typeof(Int16) ||
+						type == typeof(UInt32) ||
+						type == typeof(Int32) ||
+						type == typeof(Int64))
+					{
+						return jvalue.ToObject(type);
+					}
+					return jvalue.Value;
 				}
-				else if (jtoken.Type == JTokenType.Float)
+				else if (jvalue.Type == JTokenType.Float)
 				{
-					return jtoken.Value<double>();
+					return jvalue.Value<double>();
 				}
-				else if (jtoken.Type == JTokenType.String)
+				else if (jvalue.Type == JTokenType.String)
 				{
-					return jtoken.Value<string>();
+					return jvalue.Value<string>();
 				}
-				else if (jtoken.Type == JTokenType.Boolean)
+				else if (jvalue.Type == JTokenType.Boolean)
 				{
-					return jtoken.Value<bool>();
+					return jvalue.Value<bool>();
 				}
 				return null;
 			}

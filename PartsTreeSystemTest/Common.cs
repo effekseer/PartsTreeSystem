@@ -54,7 +54,6 @@ namespace PartsTreeSystemTest
 		public int ValueInt32;
 		public uint ValueUInt32;
 		public long ValueInt64;
-		public ulong ValueUInt64;
 		public short ValueInt16;
 		public ushort ValueUInt16;
 		public char ValueChar;

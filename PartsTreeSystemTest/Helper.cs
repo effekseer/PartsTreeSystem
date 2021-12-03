@@ -252,19 +252,6 @@ namespace PartsTreeSystemTest
 
 				return t;
 			}
-			else if (type == typeof(ulong))
-			{
-				ulong t = 0;
-				do
-				{
-					var bytes = new byte[8];
-					random.NextBytes(bytes);
-					t = System.BitConverter.ToUInt64(bytes);
-				}
-				while (avoidDefault && t == default(ulong));
-
-				return t;
-			}
 			else if (type == typeof(float))
 			{
 				float t = 0;

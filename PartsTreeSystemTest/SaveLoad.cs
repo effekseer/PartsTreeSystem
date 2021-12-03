@@ -54,8 +54,7 @@ namespace PartsTreeSystemTest
 			commandManager.NotifyEditFields(instance.Root);
 			commandManager.EndEditFields(instance.Root, env);
 
-			var json = nodeTreeGroup.Serialize();
-
+			var json = nodeTreeGroup.Serialize(env);
 			var nodeTreeGroup2 = NodeTreeGroup.Deserialize(json);
 			var instance2 = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup2, env);
 
@@ -82,7 +81,7 @@ namespace PartsTreeSystemTest
 			commandManager.NotifyEditFields(instance.Root);
 			commandManager.EndEditFields(instance.Root, env);
 
-			var json = nodeTreeGroup.Serialize();
+			var json = nodeTreeGroup.Serialize(env);
 
 			var nodeTreeGroup2 = NodeTreeGroup.Deserialize(json);
 			var instance2 = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup2, env);

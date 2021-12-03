@@ -70,8 +70,6 @@ namespace PartsTreeSystem
 		public Dictionary<int, Difference> Differences = new Dictionary<int, Difference>();
 
 		public int ParentID;
-
-		public int RootID = -1;
 	}
 
 	class NodeTreeGroupInternalData
@@ -142,7 +140,6 @@ namespace PartsTreeSystem
 			AssignID(nodeTreeBase, node);
 
 			nodeTreeBase.ParentID = parentInstanceID;
-			nodeTreeBase.RootID = node.InstanceID;
 
 			InternalData.Bases.Add(nodeTreeBase);
 
@@ -175,23 +172,33 @@ namespace PartsTreeSystem
 			AssignID(nodeTreeBase, node.Root);
 
 			nodeTreeBase.ParentID = parentInstanceID;
-			nodeTreeBase.RootID = node.Root.InstanceID;
 
 			InternalData.Bases.Add(nodeTreeBase);
 
 			return node.Root.InstanceID;
 		}
 
-		public bool RemoveNode(int instanceID)
+		public bool RemoveNode(int instanceID, Environment env)
 		{
-			var removed = InternalData.Bases.Where(_ => _.RootID == instanceID).FirstOrDefault();
-			if (removed == null)
+			var nodeBase = InternalData.Bases.FirstOrDefault(_ => _.IDRemapper.ContainsValue(instanceID));
+			if (nodeBase == null)
 			{
 				return false;
 			}
 
-			var removingNodes = new List<NodeTreeBase>();
-			removingNodes.Add(removed);
+			var rootNode = Utility.CreateNode(this, nodeBase, env);
+			if (rootNode == null)
+			{
+				return false;
+			}
+
+			if (nodeBase.IDRemapper[rootNode.InstanceID] != instanceID)
+			{
+				return false;
+			}
+
+			var removingNodeBases = new List<NodeTreeBase>();
+			removingNodeBases.Add(nodeBase);
 
 			bool changing = true;
 
@@ -201,20 +208,20 @@ namespace PartsTreeSystem
 
 				foreach (var b in InternalData.Bases)
 				{
-					if (removingNodes.Contains(b))
+					if (removingNodeBases.Contains(b))
 					{
 						continue;
 					}
 
-					if (removingNodes.Any(_ => _.IDRemapper.ContainsKey(b.ParentID)))
+					if (removingNodeBases.Any(_ => _.IDRemapper.ContainsKey(b.ParentID)))
 					{
 						changing = true;
-						removingNodes.Add(b);
+						removingNodeBases.Add(b);
 					}
 				}
 			}
 
-			foreach (var r in removingNodes)
+			foreach (var r in removingNodeBases)
 			{
 				InternalData.Bases.Remove(r);
 			}
@@ -253,9 +260,15 @@ namespace PartsTreeSystem
 			}
 		}
 
-		public string Serialize()
+		public string Serialize(Environment env)
 		{
-			return InternalData.Serialize();
+			var json = InternalData.Serialize();
+			//return json;
+			var internalData = NodeTreeGroupInternalData.Deserialize(json);
+
+			RemoveUnusedVariables(internalData, env);
+
+			return internalData.Serialize();
 		}
 
 		public static NodeTreeGroup Deserialize(string json)
@@ -265,6 +278,34 @@ namespace PartsTreeSystem
 			prefab.InternalData = NodeTreeGroupInternalData.Deserialize(json);
 
 			return prefab;
+		}
+
+		void RemoveUnusedVariables(NodeTreeGroupInternalData internalData, Environment env)
+		{
+			foreach (var nodeBase in internalData.Bases)
+			{
+				var rootNode = Utility.CreateNode(this, nodeBase, env);
+				foreach (var d in nodeBase.Differences)
+				{
+					var removingTargets = new List<AccessKeyGroup>();
+
+					foreach (var m in d.Value.Modifications)
+					{
+						var o = (object)rootNode;
+						if (Difference.GetAndCreateObjectHierarchy(ref o, m) == null)
+						{
+							removingTargets.Add(m.Target);
+						}
+					}
+
+					foreach (var t in removingTargets)
+					{
+						d.Value.Remove(t);
+					}
+				}
+			}
+
+			internalData.Bases.RemoveAll(_ => _.Differences.Count == 0);
 		}
 	}
 }

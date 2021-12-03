@@ -100,6 +100,11 @@ namespace PartsTreeSystemTest
 
 			commandManager.EndEditFields(instance.Root, env);
 
+			if (!canMergeChanges)
+			{
+				commandManager.SetFlagToBlockMergeCommands();
+			}
+
 			commandManager.StartEditFields(nodeTreeGroup, instance, instance.Root, env);
 
 			var assignedEdit3 = Helper.AssignRandomField(random, true, ref instance.Root);

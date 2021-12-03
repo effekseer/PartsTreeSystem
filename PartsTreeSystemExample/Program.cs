@@ -47,7 +47,7 @@ namespace PartsTreeSystemExample
 						var path = Altseed2.Engine.Tool.SaveDialog("nodes", System.IO.Directory.GetCurrentDirectory());
 						if (!string.IsNullOrEmpty(path))
 						{
-							var text = nodeTreeGroup.Serialize();
+							var text = nodeTreeGroup.Serialize(env);
 							System.IO.File.WriteAllText(path + ".nodes", text);
 						}
 					}

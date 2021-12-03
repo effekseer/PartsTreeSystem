@@ -312,11 +312,6 @@ namespace PartsTreeSystem
 					var path = Convert.ToString(modification.Value);
 					objects[objects.Count - 1] = env.GetAsset(path);
 				}
-				else if (modification.Value.GetType() == typeof(System.Numerics.BigInteger))
-				{
-					var big = (System.Numerics.BigInteger)modification.Value;
-					objects[objects.Count - 1] = Convert.ChangeType((UInt64)big, lastType);
-				}
 				else
 				{
 					objects[objects.Count - 1] = Convert.ChangeType(modification.Value, lastType);

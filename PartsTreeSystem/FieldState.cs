@@ -23,9 +23,19 @@ namespace PartsTreeSystem
 
 			var type = o.GetType();
 
+			if (type == typeof(ulong))
+			{
+				Console.WriteLine("UInt64 is not supported now.");
+				return null;
+			}
+			else if (type == typeof(decimal))
+			{
+				Console.WriteLine("decimal is not supported now.");
+				return null;
+			}
 			if (type.IsPrimitive)
 			{
-				// Boolean Byte SByte Int16 UInt16 Int32 UInt32 Int64 UInt64 IntPtr UIntPtr Char Double Single 
+				// Boolean Byte SByte Int16 UInt16 Int32 UInt32 Int64 IntPtr UIntPtr Char Double Single 
 				return o;
 			}
 			else if (type == typeof(string))
@@ -64,11 +74,6 @@ namespace PartsTreeSystem
 			else if (type.IsGenericType)
 			{
 				Console.WriteLine("Generic is not supported now.");
-				return null;
-			}
-			else if (type == typeof(decimal))
-			{
-				Console.WriteLine("decimal is not supported now.");
 				return null;
 			}
 			else

@@ -263,10 +263,10 @@ namespace PartsTreeSystem
 		public string Serialize(Environment env)
 		{
 			var json = InternalData.Serialize();
-			return json;
+			//return json;
 			var internalData = NodeTreeGroupInternalData.Deserialize(json);
 
-			//Sanitize(internalData, env);
+			RemoveUnusedVariables(internalData, env);
 
 			return internalData.Serialize();
 		}
@@ -280,7 +280,7 @@ namespace PartsTreeSystem
 			return prefab;
 		}
 
-		void Sanitize(NodeTreeGroupInternalData internalData, Environment env)
+		void RemoveUnusedVariables(NodeTreeGroupInternalData internalData, Environment env)
 		{
 			foreach (var nodeBase in internalData.Bases)
 			{

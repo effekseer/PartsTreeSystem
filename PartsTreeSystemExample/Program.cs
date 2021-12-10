@@ -67,6 +67,25 @@ namespace PartsTreeSystemExample
 
 				Altseed2.Engine.Tool.End();
 
+				if (Altseed2.Engine.Tool.Begin("History", Altseed2.ToolWindowFlags.NoCollapse))
+				{
+					for (int i = commandManager.Commands.Count() - 1; i >= Math.Max(0, commandManager.Commands.Count() - 20); i--)
+					{
+						var info = commandManager.Commands[i].GetInformation();
+
+						var text = string.Empty;
+						if (i == commandManager.CurrentCommandIndex)
+						{
+							text += "-";
+						}
+						text += info.Name;
+						Altseed2.Engine.Tool.Text(text);
+						Altseed2.Engine.Tool.Text(info.Detail);
+					}
+				}
+
+				Altseed2.Engine.Tool.End();
+
 				if (Altseed2.Engine.Tool.Begin("NodeTree", Altseed2.ToolWindowFlags.NoCollapse))
 				{
 					string menuKey = "menu";

@@ -5,16 +5,26 @@ using System.Linq;
 
 namespace PartsTreeSystem
 {
+	public class CommandInformation
+	{
+		public string Name;
+		public string Detail;
+	}
+
 	public class Command
 	{
 		virtual public void Execute(Environment env) { }
 		virtual public void Unexecute(Environment env) { }
+
+		virtual public CommandInformation GetInformation() { return null; }
 	}
 
 	public class DelegateCommand : Command
 	{
 		public Action OnExecute;
 		public Action OnUnexecute;
+		public string Name;
+		public string Detail;
 
 		public override void Execute(Environment env)
 		{
@@ -24,6 +34,11 @@ namespace PartsTreeSystem
 		public override void Unexecute(Environment env)
 		{
 			OnUnexecute?.Invoke();
+		}
+
+		public override CommandInformation GetInformation()
+		{
+			return new CommandInformation { Name = Name, Detail = Detail };
 		}
 	}
 
@@ -93,6 +108,11 @@ namespace PartsTreeSystem
 
 			return null;
 		}
+
+		public override CommandInformation GetInformation()
+		{
+			return new CommandInformation { Name = "ValueChange", Detail = string.Join('\n', DiffRedo.Modifications.Select(_ => _.Target.ToString())) };
+		}
 	}
 
 	public class CommandManager
@@ -113,6 +133,22 @@ namespace PartsTreeSystem
 		int currentCommand = -1;
 
 		List<Command> commands = new List<Command>();
+
+		public IReadOnlyList<Command> Commands
+		{
+			get
+			{
+				return commands;
+			}
+		}
+
+		public int CurrentCommandIndex
+		{
+			get
+			{
+				return currentCommand;
+			}
+		}
 
 		public void AddCommand(Command command)
 		{
@@ -223,6 +259,9 @@ namespace PartsTreeSystem
 				nodeTreeGroup.InternalData = NodeTreeGroupInternalData.Deserialize(before);
 			};
 
+			command.Name = "AddNode";
+			command.Detail = string.Empty;
+
 			AddCommand(command);
 		}
 
@@ -263,6 +302,9 @@ namespace PartsTreeSystem
 				var newNode = newNodeTree.FindInstance(nodeID);
 				parentNode.AddChild(newNode as INode);
 			};
+
+			command.Name = "RemoveNode";
+			command.Detail = string.Empty;
 
 			AddCommand(command);
 		}

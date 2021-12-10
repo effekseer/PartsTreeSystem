@@ -37,6 +37,11 @@ namespace PartsTreeSystem
 
 			return true;
 		}
+
+		public override string ToString()
+		{
+			return string.Join('.', Keys.Select(_ => _.ToString()));
+		}
 	}
 
 	public class AccessKey

@@ -205,7 +205,13 @@ namespace PartsTreeSystemExample
 				{
 					var n = node as NodeStruct;
 
-					if (Altseed2.Engine.Tool.TreeNode(n.Name + "##" + node.InstanceID))
+					var flag = Altseed2.ToolTreeNodeFlags.OpenOnArrow;
+					if (selectedNode == n)
+					{
+						flag |= Altseed2.ToolTreeNodeFlags.Selected;
+					}
+
+					if (Altseed2.Engine.Tool.TreeNodeEx(n.Name + "##" + node.InstanceID, flag))
 					{
 						if (Altseed2.Engine.Tool.IsItemClicked(Altseed2.ToolMouseButton.Left))
 						{
@@ -221,6 +227,11 @@ namespace PartsTreeSystemExample
 					}
 					else
 					{
+						if (Altseed2.Engine.Tool.IsItemClicked(Altseed2.ToolMouseButton.Left))
+						{
+							selectedNode = node;
+						}
+
 						showNodePopup(node, ref popupedNode);
 					}
 				};

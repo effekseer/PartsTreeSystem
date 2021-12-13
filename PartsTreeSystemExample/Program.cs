@@ -13,12 +13,12 @@ namespace PartsTreeSystemExample
 			var env = new PartsTreeSystem.Environment();
 			var commandManager = new PartsTreeSystem.CommandManager();
 
-			PartsTreeSystem.NodeTreeGroup nodeTreeGroup = new PartsTreeSystem.NodeTreeGroup();
+			var nodeTreeGroup = new PartsTreeSystem.NodeTreeGroup();
 			nodeTreeGroup.Init(typeof(NodeStruct), env);
 
 			var nodeTree = PartsTreeSystem.Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
 
-			Altseed2.Configuration configuration = new Altseed2.Configuration();
+			var configuration = new Altseed2.Configuration();
 			configuration.EnabledCoreModules = Altseed2.CoreModules.Default | Altseed2.CoreModules.Tool;
 			if (!Altseed2.Engine.Initialize("Example", 640, 480, configuration))
 			{
@@ -30,223 +30,244 @@ namespace PartsTreeSystemExample
 
 			while (Altseed2.Engine.DoEvents())
 			{
-				if (Altseed2.Engine.Tool.Begin("Command", Altseed2.ToolWindowFlags.NoCollapse))
+				UpdateCommandPanel(env, ref commandManager, ref nodeTreeGroup, ref nodeTree);
+
+				UpdateHistoryPanel(commandManager);
+
+				UpdateNodeTreePanel(env, commandManager, nodeTreeGroup, nodeTree, ref selectedNode, ref popupedNode);
+
+				if (selectedNode != null && nodeTree.FindInstance(selectedNode.InstanceID) == null)
 				{
-					if (Altseed2.Engine.Tool.Button("Undo"))
-					{
-						commandManager.Undo(env);
-					}
-
-					if (Altseed2.Engine.Tool.Button("Redo"))
-					{
-						commandManager.Redo(env);
-					}
-
-					if (Altseed2.Engine.Tool.Button("Save"))
-					{
-						var path = Altseed2.Engine.Tool.SaveDialog("nodes", System.IO.Directory.GetCurrentDirectory());
-						if (!string.IsNullOrEmpty(path))
-						{
-							var text = nodeTreeGroup.Serialize(env);
-							System.IO.File.WriteAllText(path + ".nodes", text);
-						}
-					}
-
-					if (Altseed2.Engine.Tool.Button("Load"))
-					{
-						var path = Altseed2.Engine.Tool.OpenDialog("nodes", System.IO.Directory.GetCurrentDirectory());
-						if (!string.IsNullOrEmpty(path))
-						{
-							var text = System.IO.File.ReadAllText(path);
-							nodeTreeGroup = PartsTreeSystem.NodeTreeGroup.Deserialize(text);
-							nodeTree = PartsTreeSystem.Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
-							commandManager = new PartsTreeSystem.CommandManager();
-						}
-					}
+					selectedNode = null;
 				}
 
-				Altseed2.Engine.Tool.End();
-
-				if (Altseed2.Engine.Tool.Begin("History", Altseed2.ToolWindowFlags.NoCollapse))
-				{
-					for (int i = commandManager.Commands.Count() - 1; i >= Math.Max(0, commandManager.Commands.Count() - 20); i--)
-					{
-						var info = commandManager.Commands[i].GetInformation();
-
-						var text = string.Empty;
-						if (i == commandManager.CurrentCommandIndex)
-						{
-							text += "-";
-						}
-						text += info.Name;
-						Altseed2.Engine.Tool.Text(text);
-						Altseed2.Engine.Tool.Text(info.Detail);
-					}
-				}
-
-				Altseed2.Engine.Tool.End();
-
-				if (Altseed2.Engine.Tool.Begin("NodeTree", Altseed2.ToolWindowFlags.NoCollapse))
-				{
-					string menuKey = "menu";
-
-					Action<Node> updateNode = null;
-
-					Action<Node> showNodePopup = (node) =>
-					{
-						if (Altseed2.Engine.Tool.IsItemHovered(Altseed2.ToolHoveredFlags.None))
-						{
-							if (Altseed2.Engine.Tool.IsMouseReleased(Altseed2.ToolMouseButton.Right))
-							{
-								Altseed2.Engine.Tool.OpenPopup(menuKey, Altseed2.ToolPopupFlags.None);
-								popupedNode = node;
-							}
-						}
-					};
-
-					updateNode = (node) =>
-					{
-						var n = node as NodeStruct;
-
-						if (Altseed2.Engine.Tool.TreeNode(n.Name + "##" + node.InstanceID))
-						{
-							if (Altseed2.Engine.Tool.IsItemClicked(Altseed2.ToolMouseButton.Left))
-							{
-								selectedNode = node;
-							}
-
-							showNodePopup(node);
-
-							foreach (var child in node.Children)
-							{
-								updateNode(child);
-							}
-						}
-						else
-						{
-							showNodePopup(node);
-						}
-					};
-
-					updateNode(nodeTree.Root as Node);
-
-					if (Altseed2.Engine.Tool.BeginPopup(menuKey, Altseed2.ToolWindowFlags.None))
-					{
-						if (Altseed2.Engine.Tool.Button("Add Node"))
-						{
-							commandManager.AddNode(nodeTreeGroup, nodeTree, popupedNode.InstanceID, typeof(NodeStruct), env);
-							Altseed2.Engine.Tool.CloseCurrentPopup();
-						}
-
-						if (Altseed2.Engine.Tool.Button("Remove node"))
-						{
-							commandManager.RemoveNode(nodeTreeGroup, nodeTree, popupedNode.InstanceID, env);
-							Altseed2.Engine.Tool.CloseCurrentPopup();
-						}
-
-						Altseed2.Engine.Tool.EndPopup();
-					}
-				}
-
-				Altseed2.Engine.Tool.End();
-
-				// TODO 選択されてるノードがツリー内に存在するかチェックする
-
-				if (Altseed2.Engine.Tool.Begin("Ispector", Altseed2.ToolWindowFlags.NoCollapse))
-				{
-					if (selectedNode != null)
-					{
-						commandManager.StartEditFields(nodeTreeGroup, nodeTree, selectedNode, env);
-
-						Action<FieldGetterSetter> updateFields = null;
-
-						updateFields = (FieldGetterSetter getterSetter) =>
-						{
-
-							var value = getterSetter.GetValue();
-							var name = getterSetter.GetName();
-
-							if (value is string)
-							{
-								var s = (string)value;
-
-								var result = Altseed2.Engine.Tool.InputText(name, s, 200, Altseed2.ToolInputTextFlags.None);
-								if (result != null)
-								{
-									getterSetter.SetValue(result);
-									commandManager.NotifyEditFields(selectedNode);
-								}
-							}
-							if (value is int)
-							{
-								var v = (int)value;
-
-								if (Altseed2.Engine.Tool.DragInt(name, ref v, 1, -100, 100, "%d", Altseed2.ToolSliderFlags.None))
-								{
-									getterSetter.SetValue(v);
-									commandManager.NotifyEditFields(selectedNode);
-								}
-							}
-							else if (value is float)
-							{
-								var v = (float)value;
-
-								if (Altseed2.Engine.Tool.DragFloat(name, ref v, 1, -100, 100, "%f", Altseed2.ToolSliderFlags.None))
-								{
-									getterSetter.SetValue(v);
-									commandManager.NotifyEditFields(selectedNode);
-								}
-							}
-							else if (value is IList)
-							{
-								var v = (IList)value;
-								var count = v.Count;
-								if (Altseed2.Engine.Tool.DragInt(name, ref count, 1, 0, 100, "%d", Altseed2.ToolSliderFlags.None))
-								{
-									Helper.ResizeList(v, count);
-
-									commandManager.NotifyEditFields(selectedNode);
-								}
-
-								var listGetterSetter = new FieldGetterSetter();
-
-								for (int i = 0; i < v.Count; i++)
-								{
-									listGetterSetter.Reset(v, i);
-									updateFields(listGetterSetter);
-								}
-							}
-							else
-							{
-								Altseed2.Engine.Tool.Text(name);
-							}
-						};
-
-						var fields = selectedNode.GetType().GetFields();
-
-						var getterSetter = new FieldGetterSetter();
-
-						foreach (var field in fields)
-						{
-							getterSetter.Reset(selectedNode, field);
-							updateFields(getterSetter);
-						}
-
-						commandManager.EndEditFields(selectedNode, env);
-					}
-
-					if (!Altseed2.Engine.Tool.IsAnyItemActive())
-					{
-						commandManager.SetFlagToBlockMergeCommands();
-					}
-				}
-
-				Altseed2.Engine.Tool.End();
+				UpdateInspectorPanel(env, commandManager, nodeTreeGroup, nodeTree, selectedNode);
 
 				Altseed2.Engine.Update();
 			}
 
 			Altseed2.Engine.Terminate();
+		}
+
+		private static void UpdateCommandPanel(PartsTreeSystem.Environment env, ref PartsTreeSystem.CommandManager commandManager, ref PartsTreeSystem.NodeTreeGroup nodeTreeGroup, ref PartsTreeSystem.NodeTree nodeTree)
+		{
+			if (Altseed2.Engine.Tool.Begin("Command", Altseed2.ToolWindowFlags.NoCollapse))
+			{
+				if (Altseed2.Engine.Tool.Button("Undo"))
+				{
+					commandManager.Undo(env);
+				}
+
+				if (Altseed2.Engine.Tool.Button("Redo"))
+				{
+					commandManager.Redo(env);
+				}
+
+				if (Altseed2.Engine.Tool.Button("Save"))
+				{
+					var path = Altseed2.Engine.Tool.SaveDialog("nodes", System.IO.Directory.GetCurrentDirectory());
+					if (!string.IsNullOrEmpty(path))
+					{
+						var text = nodeTreeGroup.Serialize(env);
+						System.IO.File.WriteAllText(path + ".nodes", text);
+					}
+				}
+
+				if (Altseed2.Engine.Tool.Button("Load"))
+				{
+					var path = Altseed2.Engine.Tool.OpenDialog("nodes", System.IO.Directory.GetCurrentDirectory());
+					if (!string.IsNullOrEmpty(path))
+					{
+						var text = System.IO.File.ReadAllText(path);
+						nodeTreeGroup = PartsTreeSystem.NodeTreeGroup.Deserialize(text);
+						nodeTree = PartsTreeSystem.Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
+						commandManager = new PartsTreeSystem.CommandManager();
+					}
+				}
+			}
+
+			Altseed2.Engine.Tool.End();
+		}
+
+		private static void UpdateInspectorPanel(PartsTreeSystem.Environment env, PartsTreeSystem.CommandManager commandManager, PartsTreeSystem.NodeTreeGroup nodeTreeGroup, PartsTreeSystem.NodeTree nodeTree, Node selectedNode)
+		{
+			if (Altseed2.Engine.Tool.Begin("Inspector", Altseed2.ToolWindowFlags.NoCollapse))
+			{
+				if (selectedNode != null)
+				{
+					commandManager.StartEditFields(nodeTreeGroup, nodeTree, selectedNode, env);
+
+					Action<FieldGetterSetter> updateFields = null;
+
+					updateFields = (FieldGetterSetter getterSetter) =>
+					{
+
+						var value = getterSetter.GetValue();
+						var name = getterSetter.GetName();
+
+						if (value is string)
+						{
+							var s = (string)value;
+
+							var result = Altseed2.Engine.Tool.InputText(name, s, 200, Altseed2.ToolInputTextFlags.None);
+							if (result != null)
+							{
+								getterSetter.SetValue(result);
+								commandManager.NotifyEditFields(selectedNode);
+							}
+						}
+						if (value is int)
+						{
+							var v = (int)value;
+
+							if (Altseed2.Engine.Tool.DragInt(name, ref v, 1, -100, 100, "%d", Altseed2.ToolSliderFlags.None))
+							{
+								getterSetter.SetValue(v);
+								commandManager.NotifyEditFields(selectedNode);
+							}
+						}
+						else if (value is float)
+						{
+							var v = (float)value;
+
+							if (Altseed2.Engine.Tool.DragFloat(name, ref v, 1, -100, 100, "%f", Altseed2.ToolSliderFlags.None))
+							{
+								getterSetter.SetValue(v);
+								commandManager.NotifyEditFields(selectedNode);
+							}
+						}
+						else if (value is IList)
+						{
+							var v = (IList)value;
+							var count = v.Count;
+							if (Altseed2.Engine.Tool.DragInt(name, ref count, 1, 0, 100, "%d", Altseed2.ToolSliderFlags.None))
+							{
+								Helper.ResizeList(v, count);
+
+								commandManager.NotifyEditFields(selectedNode);
+							}
+
+							var listGetterSetter = new FieldGetterSetter();
+
+							for (int i = 0; i < v.Count; i++)
+							{
+								listGetterSetter.Reset(v, i);
+								updateFields(listGetterSetter);
+							}
+						}
+						else
+						{
+							Altseed2.Engine.Tool.Text(name);
+						}
+					};
+
+					var fields = selectedNode.GetType().GetFields();
+
+					var getterSetter = new FieldGetterSetter();
+
+					foreach (var field in fields)
+					{
+						getterSetter.Reset(selectedNode, field);
+						updateFields(getterSetter);
+					}
+
+					commandManager.EndEditFields(selectedNode, env);
+				}
+
+				if (!Altseed2.Engine.Tool.IsAnyItemActive())
+				{
+					commandManager.SetFlagToBlockMergeCommands();
+				}
+			}
+
+			Altseed2.Engine.Tool.End();
+		}
+
+		private static void UpdateNodeTreePanel(PartsTreeSystem.Environment env, PartsTreeSystem.CommandManager commandManager, PartsTreeSystem.NodeTreeGroup nodeTreeGroup, PartsTreeSystem.NodeTree nodeTree, ref Node selectedNode, ref Node popupedNode)
+		{
+			if (Altseed2.Engine.Tool.Begin("NodeTree", Altseed2.ToolWindowFlags.NoCollapse))
+			{
+				const string menuKey = "menu";
+
+				void showNodePopup(Node node, ref Node popupedNode)
+				{
+					if (Altseed2.Engine.Tool.IsItemHovered(Altseed2.ToolHoveredFlags.None))
+					{
+						if (Altseed2.Engine.Tool.IsMouseReleased(Altseed2.ToolMouseButton.Right))
+						{
+							Altseed2.Engine.Tool.OpenPopup(menuKey, Altseed2.ToolPopupFlags.None);
+							popupedNode = node;
+						}
+					}
+				};
+
+				void updateNode(Node node, ref Node selectedNode, ref Node popupedNode)
+				{
+					var n = node as NodeStruct;
+
+					if (Altseed2.Engine.Tool.TreeNode(n.Name + "##" + node.InstanceID))
+					{
+						if (Altseed2.Engine.Tool.IsItemClicked(Altseed2.ToolMouseButton.Left))
+						{
+							selectedNode = node;
+						}
+
+						showNodePopup(node, ref popupedNode);
+
+						foreach (var child in node.Children)
+						{
+							updateNode(child, ref selectedNode, ref popupedNode);
+						}
+					}
+					else
+					{
+						showNodePopup(node, ref popupedNode);
+					}
+				};
+
+				updateNode(nodeTree.Root as Node, ref selectedNode, ref popupedNode);
+
+				if (Altseed2.Engine.Tool.BeginPopup(menuKey, Altseed2.ToolWindowFlags.None))
+				{
+					if (Altseed2.Engine.Tool.Button("Add Node"))
+					{
+						commandManager.AddNode(nodeTreeGroup, nodeTree, popupedNode.InstanceID, typeof(NodeStruct), env);
+						Altseed2.Engine.Tool.CloseCurrentPopup();
+					}
+
+					if (Altseed2.Engine.Tool.Button("Remove node"))
+					{
+						commandManager.RemoveNode(nodeTreeGroup, nodeTree, popupedNode.InstanceID, env);
+						Altseed2.Engine.Tool.CloseCurrentPopup();
+					}
+
+					Altseed2.Engine.Tool.EndPopup();
+				}
+			}
+
+			Altseed2.Engine.Tool.End();
+		}
+
+		private static void UpdateHistoryPanel(PartsTreeSystem.CommandManager commandManager)
+		{
+			if (Altseed2.Engine.Tool.Begin("History", Altseed2.ToolWindowFlags.NoCollapse))
+			{
+				for (int i = commandManager.Commands.Count() - 1; i >= Math.Max(0, commandManager.Commands.Count() - 20); i--)
+				{
+					var info = commandManager.Commands[i].GetInformation();
+
+					var text = string.Empty;
+					if (i == commandManager.CurrentCommandIndex)
+					{
+						text += "-";
+					}
+					text += info.Name;
+					Altseed2.Engine.Tool.Text(text);
+					Altseed2.Engine.Tool.Text(info.Detail);
+				}
+			}
+
+			Altseed2.Engine.Tool.End();
 		}
 
 		public class NodeStruct : Node

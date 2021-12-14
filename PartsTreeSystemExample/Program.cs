@@ -10,8 +10,11 @@ namespace PartsTreeSystemExample
 		[STAThread]
 		static void Main(string[] args)
 		{
-			var env = new PartsTreeSystem.Environment();
+			var env = new Environment();
 			var commandManager = new PartsTreeSystem.CommandManager();
+
+			var partsList = new PartsList();
+			partsList.Renew();
 
 			var nodeTreeGroup = new PartsTreeSystem.NodeTreeGroup();
 			nodeTreeGroup.Init(typeof(NodeStruct), env);
@@ -34,7 +37,7 @@ namespace PartsTreeSystemExample
 
 				UpdateHistoryPanel(commandManager);
 
-				UpdateNodeTreePanel(env, commandManager, nodeTreeGroup, nodeTree, ref selectedNode, ref popupedNode);
+				UpdateNodeTreePanel(env, commandManager, nodeTreeGroup, nodeTree, ref selectedNode, ref popupedNode, partsList);
 
 				if (selectedNode != null && nodeTree.FindInstance(selectedNode.InstanceID) == null)
 				{
@@ -183,7 +186,7 @@ namespace PartsTreeSystemExample
 			Altseed2.Engine.Tool.End();
 		}
 
-		private static void UpdateNodeTreePanel(PartsTreeSystem.Environment env, PartsTreeSystem.CommandManager commandManager, PartsTreeSystem.NodeTreeGroup nodeTreeGroup, PartsTreeSystem.NodeTree nodeTree, ref Node selectedNode, ref Node popupedNode)
+		private static void UpdateNodeTreePanel(PartsTreeSystem.Environment env, PartsTreeSystem.CommandManager commandManager, PartsTreeSystem.NodeTreeGroup nodeTreeGroup, PartsTreeSystem.NodeTree nodeTree, ref Node selectedNode, ref Node popupedNode, PartsList partsList)
 		{
 			if (Altseed2.Engine.Tool.Begin("NodeTree", Altseed2.ToolWindowFlags.NoCollapse))
 			{
@@ -252,6 +255,18 @@ namespace PartsTreeSystemExample
 						Altseed2.Engine.Tool.CloseCurrentPopup();
 					}
 
+					foreach (var p in partsList.Pathes)
+					{
+						if (Altseed2.Engine.Tool.Button(p))
+						{
+							var text = System.IO.File.ReadAllText(p);
+							var newNodeTreeGroup = PartsTreeSystem.NodeTreeGroup.Deserialize(text);
+
+							commandManager.AddNode(nodeTreeGroup, nodeTree, popupedNode.InstanceID, newNodeTreeGroup, env);
+							Altseed2.Engine.Tool.CloseCurrentPopup();
+						}
+					}
+
 					Altseed2.Engine.Tool.EndPopup();
 				}
 			}
@@ -310,6 +325,40 @@ namespace PartsTreeSystemExample
 		public IReadOnlyCollection<PartsTreeSystem.INode> GetChildren()
 		{
 			return Children;
+		}
+	}
+
+	class Environment : PartsTreeSystem.Environment
+	{
+		Dictionary<PartsTreeSystem.Asset, string> pathes = new Dictionary<PartsTreeSystem.Asset, string>();
+		public override PartsTreeSystem.Asset GetAsset(string path)
+		{
+			if (pathes.ContainsValue(path))
+			{
+				return pathes.Where(_ => _.Value == path).FirstOrDefault().Key;
+			}
+			var text = System.IO.File.ReadAllText(path);
+			var nodeTreeGroup = PartsTreeSystem.NodeTreeGroup.Deserialize(text);
+
+			pathes.Add(nodeTreeGroup, path);
+			return nodeTreeGroup;
+		}
+
+		public override string GetAssetPath(PartsTreeSystem.Asset asset)
+		{
+			return pathes[asset];
+		}
+	}
+
+	class PartsList
+	{
+		public IReadOnlyCollection<string> Pathes { get { return pathes; } }
+
+		string[] pathes = new string[0];
+
+		public void Renew()
+		{
+			pathes = System.IO.Directory.GetFiles("*.nodes");
 		}
 	}
 

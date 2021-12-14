@@ -225,6 +225,46 @@ namespace PartsTreeSystem
 			SetFlagToBlockMergeCommands();
 		}
 
+		public void AddNode(NodeTreeGroup nodeTreeGroup, NodeTree nodeTree, int parentID, NodeTreeGroup addingNodeTreeGroup, Environment env)
+		{
+			var before = nodeTreeGroup.InternalData.Serialize();
+			var newNodeID = nodeTreeGroup.AddNodeTreeGroup(parentID, addingNodeTreeGroup, env);
+			var after = nodeTreeGroup.InternalData.Serialize();
+
+			Action execute = () =>
+			{
+				var parentNode = nodeTree.FindInstance(parentID) as INode;
+				var newNodeTree = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
+				var newNode = newNodeTree.FindInstance(newNodeID);
+				parentNode.AddChild(newNode as INode);
+			};
+
+			execute();
+
+			var command = new DelegateCommand();
+			command.OnExecute = () =>
+			{
+				nodeTreeGroup.InternalData = NodeTreeGroupInternalData.Deserialize(after);
+				execute();
+			};
+
+			command.OnUnexecute = () =>
+			{
+				var parent = nodeTree.FindParent(newNodeID);
+				if (parent != null)
+				{
+					parent.RemoveChild(newNodeID);
+				}
+
+				nodeTreeGroup.InternalData = NodeTreeGroupInternalData.Deserialize(before);
+			};
+
+			command.Name = "AddNode(NodeTreeGroup)";
+			command.Detail = string.Empty;
+
+			AddCommand(command);
+		}
+
 		public void AddNode(NodeTreeGroup nodeTreeGroup, NodeTree nodeTree, int parentID, Type type, Environment env)
 		{
 			var before = nodeTreeGroup.InternalData.Serialize();

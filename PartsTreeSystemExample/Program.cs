@@ -259,10 +259,13 @@ namespace PartsTreeSystemExample
 					{
 						if (Altseed2.Engine.Tool.Button(p))
 						{
-							var text = System.IO.File.ReadAllText(p);
-							var newNodeTreeGroup = PartsTreeSystem.NodeTreeGroup.Deserialize(text);
+							var addingNodeTreeGroup = env.GetAsset(p) as PartsTreeSystem.NodeTreeGroup;
 
-							commandManager.AddNode(nodeTreeGroup, nodeTree, popupedNode.InstanceID, newNodeTreeGroup, env);
+							if (addingNodeTreeGroup != null)
+							{
+								commandManager.AddNode(nodeTreeGroup, nodeTree, popupedNode.InstanceID, addingNodeTreeGroup, env);
+							}
+
 							Altseed2.Engine.Tool.CloseCurrentPopup();
 						}
 					}
@@ -346,7 +349,11 @@ namespace PartsTreeSystemExample
 
 		public override string GetAssetPath(PartsTreeSystem.Asset asset)
 		{
-			return pathes[asset];
+			if (pathes.TryGetValue(asset, out var path))
+			{
+				return System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), path);
+			}
+			return System.IO.Directory.GetCurrentDirectory();
 		}
 	}
 
@@ -358,7 +365,7 @@ namespace PartsTreeSystemExample
 
 		public void Renew()
 		{
-			pathes = System.IO.Directory.GetFiles("*.nodes");
+			pathes = System.IO.Directory.GetFiles("./", "*.nodes");
 		}
 	}
 

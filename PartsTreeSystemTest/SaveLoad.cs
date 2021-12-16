@@ -126,6 +126,8 @@ namespace PartsTreeSystemTest
 			var json = nodeTreeGroup1.Serialize(env);
 
 			var nodeTreeGroup_Deserialized = NodeTreeGroup.Deserialize(json);
+
+			// TODO : Better implimentation
 			env.NodeTrees["C:/test/Tree1"] = nodeTreeGroup_Deserialized;
 			var instance2 = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup_Deserialized, env);
 

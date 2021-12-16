@@ -179,7 +179,13 @@ namespace PartsTreeSystem
 			return false;
 		}
 
-		public static Tuple<List<object>, Type> GetAndCreateObjectHierarchy(ref object target, Modification modification)
+		public class Hierarchy
+		{
+			public List<object> Objects = new List<object>();
+			public Type LastType;
+		}
+
+		public static Hierarchy GetAndCreateObjectHierarchy(ref object target, Modification modification)
 		{
 			var keys = modification.Target.Keys;
 
@@ -273,7 +279,7 @@ namespace PartsTreeSystem
 				}
 			}
 
-			return Tuple.Create(objects, lastType);
+			return new Hierarchy { Objects = objects, LastType = lastType };
 		}
 
 		public static void ApplyDifference(ref object target, Difference difference, Asset asset, IAssetInstanceRoot root, Environment env)
@@ -289,8 +295,8 @@ namespace PartsTreeSystem
 					continue;
 				}
 
-				var objects = hierarchy.Item1;
-				var lastType = hierarchy.Item2;
+				var objects = hierarchy.Objects;
+				var lastType = hierarchy.LastType;
 
 				System.Diagnostics.Debug.Assert(objects.Count - 1 == keys.Length);
 

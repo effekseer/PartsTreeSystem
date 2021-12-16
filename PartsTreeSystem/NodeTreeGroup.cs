@@ -104,19 +104,19 @@ namespace PartsTreeSystem
 			}
 		}
 
-		internal void AssignID(NodeTreeBase nodeTreeBase, INode node)
+		internal void AssignID(Dictionary<int, int> idRemapper, INode node)
 		{
 			Action<INode> assignID = null;
 
 			assignID = (n) =>
 			{
-				if (nodeTreeBase.IDRemapper.ContainsKey(n.InstanceID))
+				if (idRemapper.ContainsKey(n.InstanceID))
 				{
 					return;
 				}
 
 				var newID = GenerateGUID();
-				nodeTreeBase.IDRemapper.Add(n.InstanceID, newID);
+				idRemapper.Add(n.InstanceID, newID);
 				n.InstanceID = newID;
 
 				foreach (var child in n.GetChildren())
@@ -137,7 +137,7 @@ namespace PartsTreeSystem
 			var nodeTreeBase = new NodeTreeBase();
 			nodeTreeBase.BaseType = typeName;
 
-			AssignID(nodeTreeBase, node);
+			AssignID(nodeTreeBase.IDRemapper, node);
 
 			nodeTreeBase.ParentID = parentInstanceID;
 
@@ -169,7 +169,7 @@ namespace PartsTreeSystem
 
 			nodeTreeBase.Template = Utility.GetRelativePath(env.GetAssetPath(this), env.GetAssetPath(nodeTreeGroup));
 
-			AssignID(nodeTreeBase, node.Root);
+			AssignID(nodeTreeBase.IDRemapper, node.Root);
 
 			nodeTreeBase.ParentID = parentInstanceID;
 
@@ -282,6 +282,7 @@ namespace PartsTreeSystem
 
 		void RemoveUnusedVariables(NodeTreeGroupInternalData internalData, Environment env)
 		{
+			var nodeIDs = new HashSet<int>();
 			foreach (var nodeBase in internalData.Bases)
 			{
 				var rootNode = Utility.CreateNode(this, nodeBase, env);
@@ -303,9 +304,33 @@ namespace PartsTreeSystem
 						d.Value.Remove(t);
 					}
 				}
+
+
+				var remapResult = Utility.RemapID(nodeBase.IDRemapper, null, rootNode, null);
+
+				foreach (var unused in remapResult.UnusedIDs)
+				{
+					nodeBase.IDRemapper.Remove(unused);
+				}
+
+
+				Action<INode> visitNodes = null;
+
+				visitNodes = (n) =>
+				{
+					nodeIDs.Add(n.InstanceID);
+					foreach (var child in n.GetChildren())
+					{
+						visitNodes(child);
+					}
+				};
+
+				visitNodes(rootNode);
 			}
 
-			internalData.Bases.RemoveAll(_ => _.Differences.Count == 0);
+			nodeIDs.Add(-1);
+
+			internalData.Bases.RemoveAll(_ => _.Differences.Count == 0 && !nodeIDs.Contains(_.ParentID));
 		}
 	}
 }

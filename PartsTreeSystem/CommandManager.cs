@@ -225,12 +225,8 @@ namespace PartsTreeSystem
 			SetFlagToBlockMergeCommands();
 		}
 
-		public void AddNode(NodeTreeGroup nodeTreeGroup, NodeTree nodeTree, int parentID, NodeTreeGroup addingNodeTreeGroup, Environment env)
+		void AddNodeInternal(NodeTreeGroup nodeTreeGroup, NodeTree nodeTree, int parentID, Environment env, string before, int newNodeID, string after, string commandName)
 		{
-			var before = nodeTreeGroup.InternalData.Serialize();
-			var newNodeID = nodeTreeGroup.AddNodeTreeGroup(parentID, addingNodeTreeGroup, env);
-			var after = nodeTreeGroup.InternalData.Serialize();
-
 			Action execute = () =>
 			{
 				var parentNode = nodeTree.FindInstance(parentID) as INode;
@@ -259,10 +255,18 @@ namespace PartsTreeSystem
 				nodeTreeGroup.InternalData = NodeTreeGroupInternalData.Deserialize(before);
 			};
 
-			command.Name = "AddNode(NodeTreeGroup)";
+			command.Name = commandName;
 			command.Detail = string.Empty;
 
 			AddCommand(command);
+		}
+
+		public void AddNode(NodeTreeGroup nodeTreeGroup, NodeTree nodeTree, int parentID, NodeTreeGroup addingNodeTreeGroup, Environment env)
+		{
+			var before = nodeTreeGroup.InternalData.Serialize();
+			var newNodeID = nodeTreeGroup.AddNodeTreeGroup(parentID, addingNodeTreeGroup, env);
+			var after = nodeTreeGroup.InternalData.Serialize();
+			AddNodeInternal(nodeTreeGroup, nodeTree, parentID, env, before, newNodeID, after, "AddNode(NodeTreeGroup)");
 		}
 
 		public void AddNode(NodeTreeGroup nodeTreeGroup, NodeTree nodeTree, int parentID, Type type, Environment env)
@@ -270,39 +274,7 @@ namespace PartsTreeSystem
 			var before = nodeTreeGroup.InternalData.Serialize();
 			var newNodeID = nodeTreeGroup.AddNode(parentID, type, env);
 			var after = nodeTreeGroup.InternalData.Serialize();
-
-			Action execute = () =>
-			{
-				var parentNode = nodeTree.FindInstance(parentID) as INode;
-				var newNodeTree = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
-				var newNode = newNodeTree.FindInstance(newNodeID);
-				parentNode.AddChild(newNode as INode);
-			};
-
-			execute();
-
-			var command = new DelegateCommand();
-			command.OnExecute = () =>
-			{
-				nodeTreeGroup.InternalData = NodeTreeGroupInternalData.Deserialize(after);
-				execute();
-			};
-
-			command.OnUnexecute = () =>
-			{
-				var parent = nodeTree.FindParent(newNodeID);
-				if (parent != null)
-				{
-					parent.RemoveChild(newNodeID);
-				}
-
-				nodeTreeGroup.InternalData = NodeTreeGroupInternalData.Deserialize(before);
-			};
-
-			command.Name = "AddNode";
-			command.Detail = string.Empty;
-
-			AddCommand(command);
+			AddNodeInternal(nodeTreeGroup, nodeTree, parentID, env, before, newNodeID, after, "AddNode");
 		}
 
 		public void RemoveNode(NodeTreeGroup nodeTreeGroup, NodeTree nodeTree, int nodeID, Environment env)

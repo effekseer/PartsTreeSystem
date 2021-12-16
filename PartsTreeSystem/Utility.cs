@@ -33,6 +33,50 @@ namespace PartsTreeSystem
 			return node;
 		}
 
+		internal class RemapResult
+		{
+			public List<int> UnusedIDs = new List<int>();
+		}
+
+		internal static RemapResult RemapID(Dictionary<int, int> idRemapper, NodeTreeGroup nodeTreeGroup, INode node, Dictionary<int, INode> idToNode)
+		{
+			var result = new RemapResult();
+
+			result.UnusedIDs.AddRange(idRemapper.Keys);
+
+			Action<INode> applyID = null;
+
+			applyID = (n) =>
+			{
+				if (idRemapper.ContainsKey(node.InstanceID))
+				{
+					result.UnusedIDs.RemoveAll(_ => _ == node.InstanceID);
+					node.InstanceID = idRemapper[node.InstanceID];
+				}
+				else
+				{
+					if (nodeTreeGroup != null)
+					{
+						nodeTreeGroup.AssignID(idRemapper, n);
+					}
+				}
+
+				if (idToNode != null)
+				{
+					idToNode.Add(n.InstanceID, n);
+				}
+
+				foreach (var child in n.GetChildren())
+				{
+					applyID(child);
+				}
+			};
+
+			applyID(node);
+
+			return result;
+		}
+
 		public static string GetRelativePath(string basePath, string path)
 		{
 			Func<string, string> escape = (string s) =>
@@ -89,28 +133,7 @@ namespace PartsTreeSystem
 			{
 				var node = CreateNode(nodeTreeGroup, b, env);
 
-				Action<INode> applyID = null;
-
-				applyID = (n) =>
-				{
-					if (b.IDRemapper.ContainsKey(n.InstanceID))
-					{
-						n.InstanceID = b.IDRemapper[n.InstanceID];
-					}
-					else
-					{
-						nodeTreeGroup.AssignID(b, n);
-					}
-
-					idToNode.Add(n.InstanceID, n);
-
-					foreach (var child in n.GetChildren())
-					{
-						applyID(child);
-					}
-				};
-
-				applyID(node);
+				RemapID(b.IDRemapper, nodeTreeGroup, node, idToNode);
 
 				parentIdToChild.Add(Tuple.Create(b.ParentID, node));
 

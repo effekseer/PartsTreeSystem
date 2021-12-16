@@ -302,7 +302,7 @@ namespace PartsTreeSystem
 
 				if (lastType == null)
 				{
-					goto Exit;
+					continue;
 				}
 				else if (modification.Value == null)
 				{
@@ -348,7 +348,6 @@ namespace PartsTreeSystem
 						objects[i] = o;
 					}
 				}
-			Exit:;
 			}
 		}
 	}

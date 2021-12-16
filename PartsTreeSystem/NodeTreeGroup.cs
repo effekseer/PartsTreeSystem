@@ -263,7 +263,6 @@ namespace PartsTreeSystem
 		public string Serialize(Environment env)
 		{
 			var json = InternalData.Serialize();
-			//return json;
 			var internalData = NodeTreeGroupInternalData.Deserialize(json);
 
 			RemoveUnusedVariables(internalData, env);

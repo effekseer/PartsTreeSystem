@@ -68,28 +68,44 @@ namespace PartsTreeSystemExample
 
 				if (Altseed2.Engine.Tool.Button("Save"))
 				{
-					var path = Altseed2.Engine.Tool.SaveDialog("nodes", System.IO.Directory.GetCurrentDirectory());
-					if (!string.IsNullOrEmpty(path))
-					{
-						var text = nodeTreeGroup.Serialize(env);
-						System.IO.File.WriteAllText(path + ".nodes", text);
-					}
+					SaveNodeTreeGroup(nodeTreeGroup, env);
 				}
 
 				if (Altseed2.Engine.Tool.Button("Load"))
 				{
-					var path = Altseed2.Engine.Tool.OpenDialog("nodes", System.IO.Directory.GetCurrentDirectory());
-					if (!string.IsNullOrEmpty(path))
-					{
-						var text = System.IO.File.ReadAllText(path);
-						nodeTreeGroup = PartsTreeSystem.NodeTreeGroup.Deserialize(text);
-						nodeTree = PartsTreeSystem.Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
-						commandManager = new PartsTreeSystem.CommandManager();
-					}
+					LoadNodeTreeGroup(env, ref commandManager, ref nodeTreeGroup, ref nodeTree);
 				}
 			}
 
 			Altseed2.Engine.Tool.End();
+		}
+
+		static void SaveNodeTreeGroup(PartsTreeSystem.NodeTreeGroup nodeTreeGroup, PartsTreeSystem.Environment env)
+		{
+			var path = Altseed2.Engine.Tool.SaveDialog("nodes", System.IO.Directory.GetCurrentDirectory());
+			if (!string.IsNullOrEmpty(path))
+			{
+				var text = nodeTreeGroup.Serialize(env);
+
+				if (System.IO.Path.GetExtension(path) != ".nodes")
+				{
+					path += ".nodes";
+				}
+
+				System.IO.File.WriteAllText(path + ".nodes", text);
+			}
+		}
+
+		static void LoadNodeTreeGroup(PartsTreeSystem.Environment env, ref PartsTreeSystem.CommandManager commandManager, ref PartsTreeSystem.NodeTreeGroup nodeTreeGroup, ref PartsTreeSystem.NodeTree nodeTree)
+		{
+			var path = Altseed2.Engine.Tool.OpenDialog("nodes", System.IO.Directory.GetCurrentDirectory());
+			if (!string.IsNullOrEmpty(path))
+			{
+				var text = System.IO.File.ReadAllText(path);
+				nodeTreeGroup = PartsTreeSystem.NodeTreeGroup.Deserialize(text);
+				nodeTree = PartsTreeSystem.Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
+				commandManager = new PartsTreeSystem.CommandManager();
+			}
 		}
 
 		private static void UpdateInspectorPanel(PartsTreeSystem.Environment env, PartsTreeSystem.CommandManager commandManager, PartsTreeSystem.NodeTreeGroup nodeTreeGroup, PartsTreeSystem.NodeTree nodeTree, Node selectedNode)
@@ -100,11 +116,8 @@ namespace PartsTreeSystemExample
 				{
 					commandManager.StartEditFields(nodeTreeGroup, nodeTree, selectedNode, env);
 
-					Action<FieldGetterSetter> updateFields = null;
-
-					updateFields = (FieldGetterSetter getterSetter) =>
+					void updateFields(FieldGetterSetter getterSetter)
 					{
-
 						var value = getterSetter.GetValue();
 						var name = getterSetter.GetName();
 

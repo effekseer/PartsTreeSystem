@@ -95,13 +95,14 @@ namespace PartsTreeSystemExample
 			if (!string.IsNullOrEmpty(path))
 			{
 				var text = nodeTreeGroup.Serialize(env);
+				var ext = System.IO.Path.GetExtension(path).ToLower();
 
-				if (System.IO.Path.GetExtension(path) != ".nodes")
+				if (ext != ".nodes")
 				{
 					path += ".nodes";
 				}
 
-				System.IO.File.WriteAllText(path + ".nodes", text);
+				System.IO.File.WriteAllText(path, text);
 			}
 		}
 

@@ -256,32 +256,38 @@ namespace PartsTreeSystemExample
 
 				if (Altseed2.Engine.Tool.BeginPopup(menuKey, Altseed2.ToolWindowFlags.None))
 				{
-					if (Altseed2.Engine.Tool.Button("Add Node"))
+					if (Altseed2.Engine.Tool.MenuItem("Add Node", "", false, true))
 					{
 						commandManager.AddNode(nodeTreeGroup, nodeTree, popupedNode.InstanceID, typeof(NodeStruct), env);
 						Altseed2.Engine.Tool.CloseCurrentPopup();
 					}
 
-					if (Altseed2.Engine.Tool.Button("Remove node"))
+					if (Altseed2.Engine.Tool.BeginMenu("Add Node with Parts", true))
+					{
+						foreach (var p in partsList.Pathes)
+						{
+							if (Altseed2.Engine.Tool.MenuItem(p, "", false, true))
+							{
+								var addingNodeTreeGroup = env.GetAsset(p) as PartsTreeSystem.NodeTreeGroup;
+
+								if (addingNodeTreeGroup != null)
+								{
+									commandManager.AddNode(nodeTreeGroup, nodeTree, popupedNode.InstanceID, addingNodeTreeGroup, env);
+								}
+
+								Altseed2.Engine.Tool.CloseCurrentPopup();
+							}
+						}
+
+						Altseed2.Engine.Tool.EndMenu();
+					}
+
+					if (Altseed2.Engine.Tool.MenuItem("Remove Node", "", false, true))
 					{
 						commandManager.RemoveNode(nodeTreeGroup, nodeTree, popupedNode.InstanceID, env);
 						Altseed2.Engine.Tool.CloseCurrentPopup();
 					}
 
-					foreach (var p in partsList.Pathes)
-					{
-						if (Altseed2.Engine.Tool.Button(p))
-						{
-							var addingNodeTreeGroup = env.GetAsset(p) as PartsTreeSystem.NodeTreeGroup;
-
-							if (addingNodeTreeGroup != null)
-							{
-								commandManager.AddNode(nodeTreeGroup, nodeTree, popupedNode.InstanceID, addingNodeTreeGroup, env);
-							}
-
-							Altseed2.Engine.Tool.CloseCurrentPopup();
-						}
-					}
 
 					Altseed2.Engine.Tool.EndPopup();
 				}

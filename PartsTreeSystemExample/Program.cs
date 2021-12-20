@@ -213,6 +213,8 @@ namespace PartsTreeSystemExample
 		{
 			if (Altseed2.Engine.Tool.Begin("NodeTree", Altseed2.ToolWindowFlags.NoCollapse))
 			{
+				var delayEvents = new List<Action>();
+
 				const string menuKey = "menu";
 
 				void showNodePopup(Node node, ref Node popupedNode)
@@ -223,6 +225,57 @@ namespace PartsTreeSystemExample
 						{
 							Altseed2.Engine.Tool.OpenPopup(menuKey, Altseed2.ToolPopupFlags.None);
 							popupedNode = node;
+						}
+					}
+
+					if (popupedNode == node)
+					{
+						if (Altseed2.Engine.Tool.BeginPopup(menuKey, Altseed2.ToolWindowFlags.None))
+						{
+							if (Altseed2.Engine.Tool.MenuItem("Add Node", "", false, true))
+							{
+								commandManager.AddNode(nodeTreeGroup, nodeTree, popupedNode.InstanceID, typeof(NodeStruct), env);
+								Altseed2.Engine.Tool.CloseCurrentPopup();
+							}
+
+							if (Altseed2.Engine.Tool.BeginMenu("Add Node with Parts", true))
+							{
+								foreach (var p in partsList.Pathes)
+								{
+									if (Altseed2.Engine.Tool.MenuItem(p, "", false, true))
+									{
+										var addingNodeTreeGroup = env.GetAsset(p) as PartsTreeSystem.NodeTreeGroup;
+
+										if (addingNodeTreeGroup != null)
+										{
+											var instanceID = popupedNode.InstanceID;
+											delayEvents.Add(() =>
+											{
+												commandManager.AddNode(nodeTreeGroup, nodeTree, instanceID, addingNodeTreeGroup, env);
+											});
+										}
+
+										Altseed2.Engine.Tool.CloseCurrentPopup();
+									}
+								}
+
+								Altseed2.Engine.Tool.EndMenu();
+							}
+
+							if (nodeTreeGroup.CanRemoveNode(popupedNode.InstanceID, env))
+							{
+								if (Altseed2.Engine.Tool.MenuItem("Remove Node", "", false, true))
+								{
+									var instanceID = popupedNode.InstanceID;
+									delayEvents.Add(() =>
+									{
+										commandManager.RemoveNode(nodeTreeGroup, nodeTree, instanceID, env);
+									});
+									Altseed2.Engine.Tool.CloseCurrentPopup();
+								}
+							}
+
+							Altseed2.Engine.Tool.EndPopup();
 						}
 					}
 				};
@@ -250,6 +303,8 @@ namespace PartsTreeSystemExample
 						{
 							updateNode(child, ref selectedNode, ref popupedNode);
 						}
+
+						Altseed2.Engine.Tool.TreePop();
 					}
 					else
 					{
@@ -264,42 +319,9 @@ namespace PartsTreeSystemExample
 
 				updateNode(nodeTree.Root as Node, ref selectedNode, ref popupedNode);
 
-				if (Altseed2.Engine.Tool.BeginPopup(menuKey, Altseed2.ToolWindowFlags.None))
+				foreach (var e in delayEvents)
 				{
-					if (Altseed2.Engine.Tool.MenuItem("Add Node", "", false, true))
-					{
-						commandManager.AddNode(nodeTreeGroup, nodeTree, popupedNode.InstanceID, typeof(NodeStruct), env);
-						Altseed2.Engine.Tool.CloseCurrentPopup();
-					}
-
-					if (Altseed2.Engine.Tool.BeginMenu("Add Node with Parts", true))
-					{
-						foreach (var p in partsList.Pathes)
-						{
-							if (Altseed2.Engine.Tool.MenuItem(p, "", false, true))
-							{
-								var addingNodeTreeGroup = env.GetAsset(p) as PartsTreeSystem.NodeTreeGroup;
-
-								if (addingNodeTreeGroup != null)
-								{
-									commandManager.AddNode(nodeTreeGroup, nodeTree, popupedNode.InstanceID, addingNodeTreeGroup, env);
-								}
-
-								Altseed2.Engine.Tool.CloseCurrentPopup();
-							}
-						}
-
-						Altseed2.Engine.Tool.EndMenu();
-					}
-
-					if (Altseed2.Engine.Tool.MenuItem("Remove Node", "", false, true))
-					{
-						commandManager.RemoveNode(nodeTreeGroup, nodeTree, popupedNode.InstanceID, env);
-						Altseed2.Engine.Tool.CloseCurrentPopup();
-					}
-
-
-					Altseed2.Engine.Tool.EndPopup();
+					e();
 				}
 			}
 

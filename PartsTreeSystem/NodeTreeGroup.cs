@@ -178,7 +178,9 @@ namespace PartsTreeSystem
 			return node.Root.InstanceID;
 		}
 
-		public bool RemoveNode(int instanceID, Environment env)
+
+
+		public bool CanRemoveNode(int instanceID, Environment env)
 		{
 			var nodeBase = InternalData.Bases.FirstOrDefault(_ => _.IDRemapper.ContainsValue(instanceID));
 			if (nodeBase == null)
@@ -186,6 +188,7 @@ namespace PartsTreeSystem
 				return false;
 			}
 
+			// TODO : Refactor
 			var rootNode = Utility.CreateNode(this, nodeBase, env);
 			if (rootNode == null)
 			{
@@ -196,6 +199,18 @@ namespace PartsTreeSystem
 			{
 				return false;
 			}
+
+			return true;
+		}
+
+		public bool RemoveNode(int instanceID, Environment env)
+		{
+			if (!CanRemoveNode(instanceID, env))
+			{
+				return false;
+			}
+
+			var nodeBase = InternalData.Bases.FirstOrDefault(_ => _.IDRemapper.ContainsValue(instanceID));
 
 			var removingNodeBases = new List<NodeTreeBase>();
 			removingNodeBases.Add(nodeBase);

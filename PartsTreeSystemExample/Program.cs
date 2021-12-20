@@ -33,7 +33,7 @@ namespace PartsTreeSystemExample
 
 			while (Altseed2.Engine.DoEvents())
 			{
-				UpdateCommandPanel(env, ref commandManager, ref nodeTreeGroup, ref nodeTree);
+				UpdateMenu(env, ref commandManager, ref nodeTreeGroup, ref nodeTree);
 
 				UpdateHistoryPanel(commandManager);
 
@@ -52,32 +52,41 @@ namespace PartsTreeSystemExample
 			Altseed2.Engine.Terminate();
 		}
 
-		private static void UpdateCommandPanel(PartsTreeSystem.Environment env, ref PartsTreeSystem.CommandManager commandManager, ref PartsTreeSystem.NodeTreeGroup nodeTreeGroup, ref PartsTreeSystem.NodeTree nodeTree)
+		private static void UpdateMenu(PartsTreeSystem.Environment env, ref PartsTreeSystem.CommandManager commandManager, ref PartsTreeSystem.NodeTreeGroup nodeTreeGroup, ref PartsTreeSystem.NodeTree nodeTree)
 		{
-			if (Altseed2.Engine.Tool.Begin("Command", Altseed2.ToolWindowFlags.NoCollapse))
+			if (Altseed2.Engine.Tool.BeginMainMenuBar())
 			{
-				if (Altseed2.Engine.Tool.Button("Undo"))
+				if (Altseed2.Engine.Tool.BeginMenu("File", true))
 				{
-					commandManager.Undo(env);
+					if (Altseed2.Engine.Tool.MenuItem("Load", string.Empty, false, true))
+					{
+						LoadNodeTreeGroup(env, ref commandManager, ref nodeTreeGroup, ref nodeTree);
+					}
+
+					if (Altseed2.Engine.Tool.MenuItem("Save", string.Empty, false, true))
+					{
+						SaveNodeTreeGroup(nodeTreeGroup, env);
+					}
+					Altseed2.Engine.Tool.EndMenu();
 				}
 
-				if (Altseed2.Engine.Tool.Button("Redo"))
+				if (Altseed2.Engine.Tool.BeginMenu("Edit", true))
 				{
-					commandManager.Redo(env);
+					if (Altseed2.Engine.Tool.MenuItem("Undo", string.Empty, false, true))
+					{
+						commandManager.Undo(env);
+					}
+
+					if (Altseed2.Engine.Tool.MenuItem("Redo", string.Empty, false, true))
+					{
+						commandManager.Redo(env);
+					}
+
+					Altseed2.Engine.Tool.EndMenu();
 				}
 
-				if (Altseed2.Engine.Tool.Button("Save"))
-				{
-					SaveNodeTreeGroup(nodeTreeGroup, env);
-				}
-
-				if (Altseed2.Engine.Tool.Button("Load"))
-				{
-					LoadNodeTreeGroup(env, ref commandManager, ref nodeTreeGroup, ref nodeTree);
-				}
+				Altseed2.Engine.Tool.EndMainMenuBar();
 			}
-
-			Altseed2.Engine.Tool.End();
 		}
 
 		static void SaveNodeTreeGroup(PartsTreeSystem.NodeTreeGroup nodeTreeGroup, PartsTreeSystem.Environment env)

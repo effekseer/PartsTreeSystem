@@ -87,6 +87,42 @@ namespace PartsTreeSystem
 		}
 	}
 
+	public class NodeTreeGroupEditorInformation
+	{
+		public class Info
+		{
+			public int InstanceID;
+			public object Generator;
+		}
+
+		public List<Info> infos = new List<Info>();
+
+		public void Parse(NodeTreeGroup nodeTreeGroup, Environment env)
+		{
+			infos.Clear();
+
+			foreach (var nodeBase in nodeTreeGroup.InternalData.Bases)
+			{
+				object generator = null;
+
+				if (!string.IsNullOrEmpty(nodeBase.BaseType))
+				{
+					generator = env.GetType(nodeBase.BaseType);
+				}
+				else if (!string.IsNullOrEmpty(nodeBase.Template))
+				{
+					var path = Utility.GetAbsolutePath(env.GetAssetPath(nodeTreeGroup), nodeBase.Template);
+					generator = env.GetAsset(path);
+				}
+
+				foreach (var remapper in nodeBase.IDRemapper)
+				{
+					infos.Add(new Info { Generator = generator, InstanceID = remapper.Value });
+				}
+			}
+		}
+	}
+
 	public class NodeTreeGroup : Asset
 	{
 		internal NodeTreeGroupInternalData InternalData = new NodeTreeGroupInternalData();

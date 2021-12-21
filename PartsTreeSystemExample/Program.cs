@@ -211,6 +211,9 @@ namespace PartsTreeSystemExample
 
 		private static void UpdateNodeTreePanel(PartsTreeSystem.Environment env, PartsTreeSystem.CommandManager commandManager, PartsTreeSystem.NodeTreeGroup nodeTreeGroup, PartsTreeSystem.NodeTree nodeTree, ref Node selectedNode, ref Node popupedNode, PartsList partsList)
 		{
+			var nodeInfo = new PartsTreeSystem.NodeTreeGroupEditorInformation();
+			nodeInfo.Parse(nodeTreeGroup, env);
+
 			if (Altseed2.Engine.Tool.Begin("NodeTree", Altseed2.ToolWindowFlags.NoCollapse))
 			{
 				var delayEvents = new List<Action>();
@@ -280,7 +283,7 @@ namespace PartsTreeSystemExample
 					}
 				};
 
-				void updateNode(Node node, ref Node selectedNode, ref Node popupedNode)
+				void updateNode(Node node, ref Node selectedNode, ref Node popupedNode, ref PartsTreeSystem.NodeTreeGroupEditorInformation info)
 				{
 					var n = node as NodeStruct;
 
@@ -290,7 +293,14 @@ namespace PartsTreeSystemExample
 						flag |= Altseed2.ToolTreeNodeFlags.Selected;
 					}
 
-					if (Altseed2.Engine.Tool.TreeNodeEx(n.Name + "##" + node.InstanceID, flag))
+					string parts = string.Empty;
+					var ni = info.infos.FirstOrDefault(_ => _.InstanceID == node.InstanceID);
+					if(ni.Generator is PartsTreeSystem.Asset)
+					{
+						parts += "(Parts)";
+					}
+
+					if (Altseed2.Engine.Tool.TreeNodeEx(n.Name + parts + "##" + node.InstanceID, flag))
 					{
 						if (Altseed2.Engine.Tool.IsItemClicked(Altseed2.ToolMouseButton.Left))
 						{
@@ -301,7 +311,7 @@ namespace PartsTreeSystemExample
 
 						foreach (var child in node.Children)
 						{
-							updateNode(child, ref selectedNode, ref popupedNode);
+							updateNode(child, ref selectedNode, ref popupedNode, ref info);
 						}
 
 						Altseed2.Engine.Tool.TreePop();
@@ -317,7 +327,7 @@ namespace PartsTreeSystemExample
 					}
 				};
 
-				updateNode(nodeTree.Root as Node, ref selectedNode, ref popupedNode);
+				updateNode(nodeTree.Root as Node, ref selectedNode, ref popupedNode, ref nodeInfo);
 
 				foreach (var e in delayEvents)
 				{

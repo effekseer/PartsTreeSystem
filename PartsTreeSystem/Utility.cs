@@ -48,10 +48,10 @@ namespace PartsTreeSystem
 
 			applyID = (n) =>
 			{
-				if (idRemapper.ContainsKey(node.InstanceID))
+				if (idRemapper.ContainsKey(n.InstanceID))
 				{
-					result.UnusedIDs.RemoveAll(_ => _ == node.InstanceID);
-					node.InstanceID = idRemapper[node.InstanceID];
+					result.UnusedIDs.RemoveAll(_ => _ == n.InstanceID);
+					n.InstanceID = idRemapper[n.InstanceID];
 				}
 				else
 				{

@@ -19,6 +19,8 @@ namespace PartsTreeSystemExample
 			var nodeTreeGroup = new PartsTreeSystem.NodeTreeGroup();
 			nodeTreeGroup.Init(typeof(NodeStruct), env);
 
+			var nodeTreeGroupEditorProperty = new PartsTreeSystem.NodeTreeGroupEditorProperty(nodeTreeGroup, env);
+
 			var nodeTree = PartsTreeSystem.Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
 
 			var configuration = new Altseed2.Configuration();
@@ -33,11 +35,11 @@ namespace PartsTreeSystemExample
 
 			while (Altseed2.Engine.DoEvents())
 			{
-				UpdateMenu(env, ref commandManager, ref nodeTreeGroup, ref nodeTree);
+				UpdateMenu(env, ref commandManager, ref nodeTreeGroup, ref nodeTree, ref nodeTreeGroupEditorProperty);
 
 				UpdateHistoryPanel(commandManager);
 
-				UpdateNodeTreePanel(env, commandManager, nodeTreeGroup, nodeTree, ref selectedNode, ref popupedNode, partsList);
+				UpdateNodeTreePanel(env, commandManager, nodeTreeGroup, nodeTree, ref selectedNode, ref popupedNode, partsList, ref nodeTreeGroupEditorProperty);
 
 				if (selectedNode != null && nodeTree.FindInstance(selectedNode.InstanceID) == null)
 				{
@@ -52,7 +54,7 @@ namespace PartsTreeSystemExample
 			Altseed2.Engine.Terminate();
 		}
 
-		private static void UpdateMenu(PartsTreeSystem.Environment env, ref PartsTreeSystem.CommandManager commandManager, ref PartsTreeSystem.NodeTreeGroup nodeTreeGroup, ref PartsTreeSystem.NodeTree nodeTree)
+		private static void UpdateMenu(PartsTreeSystem.Environment env, ref PartsTreeSystem.CommandManager commandManager, ref PartsTreeSystem.NodeTreeGroup nodeTreeGroup, ref PartsTreeSystem.NodeTree nodeTree, ref PartsTreeSystem.NodeTreeGroupEditorProperty nodeTreeGroupEditorProperty)
 		{
 			if (Altseed2.Engine.Tool.BeginMainMenuBar())
 			{
@@ -60,7 +62,7 @@ namespace PartsTreeSystemExample
 				{
 					if (Altseed2.Engine.Tool.MenuItem("Load", string.Empty, false, true))
 					{
-						LoadNodeTreeGroup(env, ref commandManager, ref nodeTreeGroup, ref nodeTree);
+						LoadNodeTreeGroup(env, ref commandManager, ref nodeTreeGroup, ref nodeTree, ref nodeTreeGroupEditorProperty);
 					}
 
 					if (Altseed2.Engine.Tool.MenuItem("Save", string.Empty, false, true))
@@ -75,11 +77,13 @@ namespace PartsTreeSystemExample
 					if (Altseed2.Engine.Tool.MenuItem("Undo", string.Empty, false, true))
 					{
 						commandManager.Undo(env);
+						nodeTreeGroupEditorProperty.Rebuild();
 					}
 
 					if (Altseed2.Engine.Tool.MenuItem("Redo", string.Empty, false, true))
 					{
 						commandManager.Redo(env);
+						nodeTreeGroupEditorProperty.Rebuild();
 					}
 
 					Altseed2.Engine.Tool.EndMenu();
@@ -106,7 +110,7 @@ namespace PartsTreeSystemExample
 			}
 		}
 
-		static void LoadNodeTreeGroup(PartsTreeSystem.Environment env, ref PartsTreeSystem.CommandManager commandManager, ref PartsTreeSystem.NodeTreeGroup nodeTreeGroup, ref PartsTreeSystem.NodeTree nodeTree)
+		static void LoadNodeTreeGroup(PartsTreeSystem.Environment env, ref PartsTreeSystem.CommandManager commandManager, ref PartsTreeSystem.NodeTreeGroup nodeTreeGroup, ref PartsTreeSystem.NodeTree nodeTree, ref PartsTreeSystem.NodeTreeGroupEditorProperty nodeTreeGroupEditorProperty)
 		{
 			var path = Altseed2.Engine.Tool.OpenDialog("nodes", System.IO.Directory.GetCurrentDirectory());
 			if (!string.IsNullOrEmpty(path))
@@ -114,6 +118,7 @@ namespace PartsTreeSystemExample
 				var text = System.IO.File.ReadAllText(path);
 				nodeTreeGroup = PartsTreeSystem.NodeTreeGroup.Deserialize(text);
 				nodeTree = PartsTreeSystem.Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
+				nodeTreeGroupEditorProperty = new PartsTreeSystem.NodeTreeGroupEditorProperty(nodeTreeGroup, env);
 				commandManager = new PartsTreeSystem.CommandManager();
 			}
 		}
@@ -209,7 +214,7 @@ namespace PartsTreeSystemExample
 			Altseed2.Engine.Tool.End();
 		}
 
-		private static void UpdateNodeTreePanel(PartsTreeSystem.Environment env, PartsTreeSystem.CommandManager commandManager, PartsTreeSystem.NodeTreeGroup nodeTreeGroup, PartsTreeSystem.NodeTree nodeTree, ref Node selectedNode, ref Node popupedNode, PartsList partsList)
+		private static void UpdateNodeTreePanel(PartsTreeSystem.Environment env, PartsTreeSystem.CommandManager commandManager, PartsTreeSystem.NodeTreeGroup nodeTreeGroup, PartsTreeSystem.NodeTree nodeTree, ref Node selectedNode, ref Node popupedNode, PartsList partsList, ref PartsTreeSystem.NodeTreeGroupEditorProperty nodeTreeGroupEditorProperty)
 		{
 			if (Altseed2.Engine.Tool.Begin("NodeTree", Altseed2.ToolWindowFlags.NoCollapse))
 			{
@@ -217,7 +222,7 @@ namespace PartsTreeSystemExample
 
 				const string menuKey = "menu";
 
-				void showNodePopup(Node node, ref Node popupedNode)
+				void showNodePopup(Node node, ref Node popupedNode, PartsTreeSystem.NodeTreeGroupEditorProperty nodeTreeGroupEditorProperty)
 				{
 					if (Altseed2.Engine.Tool.IsItemHovered(Altseed2.ToolHoveredFlags.None))
 					{
@@ -234,7 +239,12 @@ namespace PartsTreeSystemExample
 						{
 							if (Altseed2.Engine.Tool.MenuItem("Add Node", "", false, true))
 							{
-								commandManager.AddNode(nodeTreeGroup, nodeTree, popupedNode.InstanceID, typeof(NodeStruct), env);
+								var instanceID = popupedNode.InstanceID;
+								delayEvents.Add(() =>
+								{
+									commandManager.AddNode(nodeTreeGroup, nodeTree, instanceID, typeof(NodeStruct), env);
+									nodeTreeGroupEditorProperty.Rebuild();
+								});
 								Altseed2.Engine.Tool.CloseCurrentPopup();
 							}
 
@@ -252,6 +262,7 @@ namespace PartsTreeSystemExample
 											delayEvents.Add(() =>
 											{
 												commandManager.AddNode(nodeTreeGroup, nodeTree, instanceID, addingNodeTreeGroup, env);
+												nodeTreeGroupEditorProperty.Rebuild();
 											});
 										}
 
@@ -270,6 +281,7 @@ namespace PartsTreeSystemExample
 									delayEvents.Add(() =>
 									{
 										commandManager.RemoveNode(nodeTreeGroup, nodeTree, instanceID, env);
+										nodeTreeGroupEditorProperty.Rebuild();
 									});
 									Altseed2.Engine.Tool.CloseCurrentPopup();
 								}
@@ -280,7 +292,7 @@ namespace PartsTreeSystemExample
 					}
 				};
 
-				void updateNode(Node node, ref Node selectedNode, ref Node popupedNode)
+				void updateNode(Node node, ref Node selectedNode, ref Node popupedNode, ref PartsTreeSystem.NodeTreeGroupEditorProperty nodeTreeGroupEditorProperty)
 				{
 					var n = node as NodeStruct;
 
@@ -290,18 +302,25 @@ namespace PartsTreeSystemExample
 						flag |= Altseed2.ToolTreeNodeFlags.Selected;
 					}
 
-					if (Altseed2.Engine.Tool.TreeNodeEx(n.Name + "##" + node.InstanceID, flag))
+					string parts = string.Empty;
+					var prop = nodeTreeGroupEditorProperty.Properties.FirstOrDefault(_ => _.InstanceID == node.InstanceID);
+					if (prop.Generator is PartsTreeSystem.Asset)
+					{
+						parts += "(Parts)";
+					}
+
+					if (Altseed2.Engine.Tool.TreeNodeEx(n.Name + parts + "##" + node.InstanceID, flag))
 					{
 						if (Altseed2.Engine.Tool.IsItemClicked(Altseed2.ToolMouseButton.Left))
 						{
 							selectedNode = node;
 						}
 
-						showNodePopup(node, ref popupedNode);
+						showNodePopup(node, ref popupedNode, nodeTreeGroupEditorProperty);
 
 						foreach (var child in node.Children)
 						{
-							updateNode(child, ref selectedNode, ref popupedNode);
+							updateNode(child, ref selectedNode, ref popupedNode, ref nodeTreeGroupEditorProperty);
 						}
 
 						Altseed2.Engine.Tool.TreePop();
@@ -313,11 +332,11 @@ namespace PartsTreeSystemExample
 							selectedNode = node;
 						}
 
-						showNodePopup(node, ref popupedNode);
+						showNodePopup(node, ref popupedNode, nodeTreeGroupEditorProperty);
 					}
 				};
 
-				updateNode(nodeTree.Root as Node, ref selectedNode, ref popupedNode);
+				updateNode(nodeTree.Root as Node, ref selectedNode, ref popupedNode, ref nodeTreeGroupEditorProperty);
 
 				foreach (var e in delayEvents)
 				{

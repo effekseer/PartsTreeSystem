@@ -10,18 +10,14 @@ namespace PartsTreeSystemExample
 		[STAThread]
 		static void Main(string[] args)
 		{
-			var env = new Environment();
-			var commandManager = new PartsTreeSystem.CommandManager();
+			var state = new EditorState();
 
-			var partsList = new PartsList();
-			partsList.Renew();
+			state.Env = new Environment();
+			state.PartsList = new PartsList();
+			state.PartsList.Renew();
 
-			var nodeTreeGroup = new PartsTreeSystem.NodeTreeGroup();
-			nodeTreeGroup.Init(typeof(NodeStruct), env);
-
-			var nodeTreeGroupEditorProperty = new PartsTreeSystem.NodeTreeGroupEditorProperty(nodeTreeGroup, env);
-
-			var nodeTree = PartsTreeSystem.Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
+			var context = new NodeTreeGroupContext();
+			context.New(typeof(NodeStruct), state);
 
 			var configuration = new Altseed2.Configuration();
 			configuration.EnabledCoreModules = Altseed2.CoreModules.Default | Altseed2.CoreModules.Tool;
@@ -30,23 +26,20 @@ namespace PartsTreeSystemExample
 				return;
 			}
 
-			Node selectedNode = null;
-			Node popupedNode = null;
-
 			while (Altseed2.Engine.DoEvents())
 			{
-				UpdateMenu(env, ref commandManager, ref nodeTreeGroup, ref nodeTree, ref nodeTreeGroupEditorProperty);
+				UpdateMenu(ref context, state);
 
-				UpdateHistoryPanel(commandManager);
+				UpdateHistoryPanel(context.CommandManager);
 
-				UpdateNodeTreePanel(env, commandManager, nodeTreeGroup, nodeTree, ref selectedNode, ref popupedNode, partsList, ref nodeTreeGroupEditorProperty);
+				UpdateNodeTreePanel(ref context, ref state);
 
-				if (selectedNode != null && nodeTree.FindInstance(selectedNode.InstanceID) == null)
+				if (state.SelectedNode != null && context.NodeTree.FindInstance(state.SelectedNode.InstanceID) == null)
 				{
-					selectedNode = null;
+					state.SelectedNode = null;
 				}
 
-				UpdateInspectorPanel(env, commandManager, nodeTreeGroup, nodeTree, selectedNode);
+				UpdateInspectorPanel(ref context, ref state);
 
 				Altseed2.Engine.Update();
 			}
@@ -54,7 +47,7 @@ namespace PartsTreeSystemExample
 			Altseed2.Engine.Terminate();
 		}
 
-		private static void UpdateMenu(PartsTreeSystem.Environment env, ref PartsTreeSystem.CommandManager commandManager, ref PartsTreeSystem.NodeTreeGroup nodeTreeGroup, ref PartsTreeSystem.NodeTree nodeTree, ref PartsTreeSystem.NodeTreeGroupEditorProperty nodeTreeGroupEditorProperty)
+		private static void UpdateMenu(ref NodeTreeGroupContext context, EditorState state)
 		{
 			if (Altseed2.Engine.Tool.BeginMainMenuBar())
 			{
@@ -62,12 +55,12 @@ namespace PartsTreeSystemExample
 				{
 					if (Altseed2.Engine.Tool.MenuItem("Load", string.Empty, false, true))
 					{
-						LoadNodeTreeGroup(env, ref commandManager, ref nodeTreeGroup, ref nodeTree, ref nodeTreeGroupEditorProperty);
+						LoadNodeTreeGroup(ref context, state);
 					}
 
 					if (Altseed2.Engine.Tool.MenuItem("Save", string.Empty, false, true))
 					{
-						SaveNodeTreeGroup(nodeTreeGroup, env);
+						SaveNodeTreeGroup(ref context, state);
 					}
 					Altseed2.Engine.Tool.EndMenu();
 				}
@@ -76,14 +69,14 @@ namespace PartsTreeSystemExample
 				{
 					if (Altseed2.Engine.Tool.MenuItem("Undo", string.Empty, false, true))
 					{
-						commandManager.Undo(env);
-						nodeTreeGroupEditorProperty.Rebuild();
+						context.CommandManager.Undo(state.Env);
+						context.EditorProperty.Rebuild();
 					}
 
 					if (Altseed2.Engine.Tool.MenuItem("Redo", string.Empty, false, true))
 					{
-						commandManager.Redo(env);
-						nodeTreeGroupEditorProperty.Rebuild();
+						context.CommandManager.Redo(state.Env);
+						context.EditorProperty.Rebuild();
 					}
 
 					Altseed2.Engine.Tool.EndMenu();
@@ -93,12 +86,12 @@ namespace PartsTreeSystemExample
 			}
 		}
 
-		static void SaveNodeTreeGroup(PartsTreeSystem.NodeTreeGroup nodeTreeGroup, PartsTreeSystem.Environment env)
+		static void SaveNodeTreeGroup(ref NodeTreeGroupContext context, EditorState state)
 		{
 			var path = Altseed2.Engine.Tool.SaveDialog("nodes", System.IO.Directory.GetCurrentDirectory());
 			if (!string.IsNullOrEmpty(path))
 			{
-				var text = nodeTreeGroup.Serialize(env);
+				var text = context.NodeTreeGroup.Serialize(state.Env);
 				var ext = System.IO.Path.GetExtension(path).ToLower();
 
 				if (ext != ".nodes")
@@ -110,28 +103,26 @@ namespace PartsTreeSystemExample
 			}
 		}
 
-		static void LoadNodeTreeGroup(PartsTreeSystem.Environment env, ref PartsTreeSystem.CommandManager commandManager, ref PartsTreeSystem.NodeTreeGroup nodeTreeGroup, ref PartsTreeSystem.NodeTree nodeTree, ref PartsTreeSystem.NodeTreeGroupEditorProperty nodeTreeGroupEditorProperty)
+		static void LoadNodeTreeGroup(ref NodeTreeGroupContext context, EditorState state)
 		{
 			var path = Altseed2.Engine.Tool.OpenDialog("nodes", System.IO.Directory.GetCurrentDirectory());
 			if (!string.IsNullOrEmpty(path))
 			{
-				var text = System.IO.File.ReadAllText(path);
-				nodeTreeGroup = PartsTreeSystem.NodeTreeGroup.Deserialize(text);
-				nodeTree = PartsTreeSystem.Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
-				nodeTreeGroupEditorProperty = new PartsTreeSystem.NodeTreeGroupEditorProperty(nodeTreeGroup, env);
-				commandManager = new PartsTreeSystem.CommandManager();
+				context = new NodeTreeGroupContext();
+				context.Load(path, state);
+				state.Unselect();
 			}
 		}
 
-		private static void UpdateInspectorPanel(PartsTreeSystem.Environment env, PartsTreeSystem.CommandManager commandManager, PartsTreeSystem.NodeTreeGroup nodeTreeGroup, PartsTreeSystem.NodeTree nodeTree, Node selectedNode)
+		private static void UpdateInspectorPanel(ref NodeTreeGroupContext context, ref EditorState state)
 		{
 			if (Altseed2.Engine.Tool.Begin("Inspector", Altseed2.ToolWindowFlags.NoCollapse))
 			{
-				if (selectedNode != null)
+				if (state.SelectedNode != null)
 				{
-					commandManager.StartEditFields(nodeTreeGroup, nodeTree, selectedNode, env);
+					context.CommandManager.StartEditFields(context.NodeTreeGroup, context.NodeTree, state.SelectedNode, state.Env);
 
-					void updateFields(FieldGetterSetter getterSetter)
+					void updateFields(NodeTreeGroupContext context, Node selectedNode, FieldGetterSetter getterSetter)
 					{
 						var value = getterSetter.GetValue();
 						var name = getterSetter.GetName();
@@ -144,7 +135,7 @@ namespace PartsTreeSystemExample
 							if (result != null)
 							{
 								getterSetter.SetValue(result);
-								commandManager.NotifyEditFields(selectedNode);
+								context.CommandManager.NotifyEditFields(selectedNode);
 							}
 						}
 						if (value is int)
@@ -154,7 +145,7 @@ namespace PartsTreeSystemExample
 							if (Altseed2.Engine.Tool.DragInt(name, ref v, 1, -100, 100, "%d", Altseed2.ToolSliderFlags.None))
 							{
 								getterSetter.SetValue(v);
-								commandManager.NotifyEditFields(selectedNode);
+								context.CommandManager.NotifyEditFields(selectedNode);
 							}
 						}
 						else if (value is float)
@@ -164,7 +155,7 @@ namespace PartsTreeSystemExample
 							if (Altseed2.Engine.Tool.DragFloat(name, ref v, 1, -100, 100, "%f", Altseed2.ToolSliderFlags.None))
 							{
 								getterSetter.SetValue(v);
-								commandManager.NotifyEditFields(selectedNode);
+								context.CommandManager.NotifyEditFields(selectedNode);
 							}
 						}
 						else if (value is IList)
@@ -175,7 +166,7 @@ namespace PartsTreeSystemExample
 							{
 								Helper.ResizeList(v, count);
 
-								commandManager.NotifyEditFields(selectedNode);
+								context.CommandManager.NotifyEditFields(selectedNode);
 							}
 
 							var listGetterSetter = new FieldGetterSetter();
@@ -183,7 +174,7 @@ namespace PartsTreeSystemExample
 							for (int i = 0; i < v.Count; i++)
 							{
 								listGetterSetter.Reset(v, i);
-								updateFields(listGetterSetter);
+								updateFields(context, selectedNode, listGetterSetter);
 							}
 						}
 						else
@@ -192,29 +183,29 @@ namespace PartsTreeSystemExample
 						}
 					};
 
-					var fields = selectedNode.GetType().GetFields();
+					var fields = state.SelectedNode.GetType().GetFields();
 
 					var getterSetter = new FieldGetterSetter();
 
 					foreach (var field in fields)
 					{
-						getterSetter.Reset(selectedNode, field);
-						updateFields(getterSetter);
+						getterSetter.Reset(state.SelectedNode, field);
+						updateFields(context, state.SelectedNode, getterSetter);
 					}
 
-					commandManager.EndEditFields(selectedNode, env);
+					context.CommandManager.EndEditFields(state.SelectedNode, state.Env);
 				}
 
 				if (!Altseed2.Engine.Tool.IsAnyItemActive())
 				{
-					commandManager.SetFlagToBlockMergeCommands();
+					context.CommandManager.SetFlagToBlockMergeCommands();
 				}
 			}
 
 			Altseed2.Engine.Tool.End();
 		}
 
-		private static void UpdateNodeTreePanel(PartsTreeSystem.Environment env, PartsTreeSystem.CommandManager commandManager, PartsTreeSystem.NodeTreeGroup nodeTreeGroup, PartsTreeSystem.NodeTree nodeTree, ref Node selectedNode, ref Node popupedNode, PartsList partsList, ref PartsTreeSystem.NodeTreeGroupEditorProperty nodeTreeGroupEditorProperty)
+		private static void UpdateNodeTreePanel(ref NodeTreeGroupContext context, ref EditorState state)
 		{
 			if (Altseed2.Engine.Tool.Begin("NodeTree", Altseed2.ToolWindowFlags.NoCollapse))
 			{
@@ -222,7 +213,14 @@ namespace PartsTreeSystemExample
 
 				const string menuKey = "menu";
 
-				void showNodePopup(Node node, ref Node popupedNode, PartsTreeSystem.NodeTreeGroupEditorProperty nodeTreeGroupEditorProperty)
+				var commandManager = context.CommandManager;
+				var nodeTreeGroup = context.NodeTreeGroup;
+				var nodeTree = context.NodeTree;
+				var partsList = state.PartsList;
+				var env = state.Env;
+				var nodeTreeGroupEditorProperty = context.EditorProperty;
+
+				void showNodePopup(Node node, ref Node popupedNode)
 				{
 					if (Altseed2.Engine.Tool.IsItemHovered(Altseed2.ToolHoveredFlags.None))
 					{
@@ -292,7 +290,7 @@ namespace PartsTreeSystemExample
 					}
 				};
 
-				void updateNode(Node node, ref Node selectedNode, ref Node popupedNode, ref PartsTreeSystem.NodeTreeGroupEditorProperty nodeTreeGroupEditorProperty)
+				void updateNode(Node node, ref Node selectedNode, ref Node popupedNode)
 				{
 					var n = node as NodeStruct;
 
@@ -316,11 +314,11 @@ namespace PartsTreeSystemExample
 							selectedNode = node;
 						}
 
-						showNodePopup(node, ref popupedNode, nodeTreeGroupEditorProperty);
+						showNodePopup(node, ref popupedNode);
 
 						foreach (var child in node.Children)
 						{
-							updateNode(child, ref selectedNode, ref popupedNode, ref nodeTreeGroupEditorProperty);
+							updateNode(child, ref selectedNode, ref popupedNode);
 						}
 
 						Altseed2.Engine.Tool.TreePop();
@@ -332,11 +330,11 @@ namespace PartsTreeSystemExample
 							selectedNode = node;
 						}
 
-						showNodePopup(node, ref popupedNode, nodeTreeGroupEditorProperty);
+						showNodePopup(node, ref popupedNode);
 					}
 				};
 
-				updateNode(nodeTree.Root as Node, ref selectedNode, ref popupedNode, ref nodeTreeGroupEditorProperty);
+				updateNode(nodeTree.Root as Node, ref state.SelectedNode, ref state.PopupedNode);
 
 				foreach (var e in delayEvents)
 				{
@@ -367,6 +365,46 @@ namespace PartsTreeSystemExample
 			}
 
 			Altseed2.Engine.Tool.End();
+		}
+
+		public class NodeTreeGroupContext
+		{
+			public PartsTreeSystem.NodeTreeGroup NodeTreeGroup;
+			public PartsTreeSystem.NodeTree NodeTree;
+			public PartsTreeSystem.NodeTreeGroupEditorProperty EditorProperty;
+			public PartsTreeSystem.CommandManager CommandManager;
+
+			public void New(Type type, EditorState state)
+			{
+				NodeTreeGroup = new PartsTreeSystem.NodeTreeGroup();
+				NodeTreeGroup.Init(type, state.Env);
+				EditorProperty = new PartsTreeSystem.NodeTreeGroupEditorProperty(NodeTreeGroup, state.Env);
+				NodeTree = PartsTreeSystem.Utility.CreateNodeFromNodeTreeGroup(NodeTreeGroup, state.Env);
+				CommandManager = new PartsTreeSystem.CommandManager();
+			}
+
+			public void Load(string path, EditorState state)
+			{
+				var text = System.IO.File.ReadAllText(path);
+				NodeTreeGroup = PartsTreeSystem.NodeTreeGroup.Deserialize(text);
+				EditorProperty = new PartsTreeSystem.NodeTreeGroupEditorProperty(NodeTreeGroup, state.Env);
+				NodeTree = PartsTreeSystem.Utility.CreateNodeFromNodeTreeGroup(NodeTreeGroup, state.Env);
+				CommandManager = new PartsTreeSystem.CommandManager();
+			}
+		}
+
+		public class EditorState
+		{
+			public PartsTreeSystem.Environment Env;
+			public PartsList PartsList;
+			public Node SelectedNode = null;
+			public Node PopupedNode = null;
+
+			public void Unselect()
+			{
+				SelectedNode = null;
+				PopupedNode = null;
+			}
 		}
 
 		public class NodeStruct : Node

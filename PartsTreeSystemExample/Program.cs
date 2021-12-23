@@ -32,7 +32,7 @@ namespace PartsTreeSystemExample
 
 				UpdateHistoryPanel(context.CommandManager);
 
-				UpdateNodeTreePanel(ref context, ref state);
+				UpdateNodeTreePanel(ref context, state);
 
 				if (state.SelectedNode != null && context.NodeTree.FindInstance(state.SelectedNode.InstanceID) == null)
 				{
@@ -40,6 +40,15 @@ namespace PartsTreeSystemExample
 				}
 
 				UpdateInspectorPanel(ref context, ref state);
+
+				if (!string.IsNullOrEmpty(state.NextLoadPath))
+				{
+					context = new NodeTreeGroupContext();
+					context.Load(state.NextLoadPath, state);
+					state.Unselect();
+
+					state.NextLoadPath = string.Empty;
+				}
 
 				Altseed2.Engine.Update();
 			}
@@ -108,9 +117,7 @@ namespace PartsTreeSystemExample
 			var path = Altseed2.Engine.Tool.OpenDialog("nodes", System.IO.Directory.GetCurrentDirectory());
 			if (!string.IsNullOrEmpty(path))
 			{
-				context = new NodeTreeGroupContext();
-				context.Load(path, state);
-				state.Unselect();
+				state.NextLoadPath = path;
 			}
 		}
 
@@ -205,7 +212,7 @@ namespace PartsTreeSystemExample
 			Altseed2.Engine.Tool.End();
 		}
 
-		private static void UpdateNodeTreePanel(ref NodeTreeGroupContext context, ref EditorState state)
+		private static void UpdateNodeTreePanel(ref NodeTreeGroupContext context, EditorState state)
 		{
 			if (Altseed2.Engine.Tool.Begin("NodeTree", Altseed2.ToolWindowFlags.NoCollapse))
 			{
@@ -233,6 +240,8 @@ namespace PartsTreeSystemExample
 
 					if (popupedNode == node)
 					{
+						var prop = nodeTreeGroupEditorProperty.Properties.FirstOrDefault(_ => _.InstanceID == node.InstanceID);
+
 						if (Altseed2.Engine.Tool.BeginPopup(menuKey, Altseed2.ToolWindowFlags.None))
 						{
 							if (Altseed2.Engine.Tool.MenuItem("Add Node", "", false, true))
@@ -281,6 +290,16 @@ namespace PartsTreeSystemExample
 										commandManager.RemoveNode(nodeTreeGroup, nodeTree, instanceID, env);
 										nodeTreeGroupEditorProperty.Rebuild();
 									});
+									Altseed2.Engine.Tool.CloseCurrentPopup();
+								}
+							}
+
+							if (prop.Generator is PartsTreeSystem.Asset)
+							{
+								var path = env.GetAssetPath(prop.Generator as PartsTreeSystem.Asset);
+								if (Altseed2.Engine.Tool.MenuItem("Edit Parts", "", false, true))
+								{
+									state.NextLoadPath = path;
 									Altseed2.Engine.Tool.CloseCurrentPopup();
 								}
 							}
@@ -399,6 +418,7 @@ namespace PartsTreeSystemExample
 			public PartsList PartsList;
 			public Node SelectedNode = null;
 			public Node PopupedNode = null;
+			public string NextLoadPath = string.Empty;
 
 			public void Unselect()
 			{

@@ -12,6 +12,19 @@ namespace PartsTreeSystem
 		{
 			public int InstanceID;
 			public object Generator;
+
+			public bool IsValueEdited(string[] fields)
+			{
+				if (Base.Differences.TryGetValue(InstanceID, out var value))
+				{
+					var akg = new AccessKeyGroup { Keys = fields.Select(_ => new AccessKey { Name = _ }).ToArray() };
+					return value.ContainTarget(akg);
+				}
+
+				return false;
+			}
+
+			internal NodeTreeBase Base;
 		}
 
 		List<NodeProperty> nodeProperties = new List<NodeProperty>();
@@ -48,7 +61,7 @@ namespace PartsTreeSystem
 
 				foreach (var remapper in nodeBase.IDRemapper)
 				{
-					nodeProperties.Add(new NodeProperty { Generator = generator, InstanceID = remapper.Value });
+					nodeProperties.Add(new NodeProperty { Generator = generator, InstanceID = remapper.Value, Base = nodeBase });
 				}
 			}
 		}

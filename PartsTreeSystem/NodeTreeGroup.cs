@@ -265,11 +265,21 @@ namespace PartsTreeSystem
 				{
 					if (b.Differences.ContainsKey(instanceID))
 					{
-						b.Differences[instanceID] = difference;
+						if (difference != null)
+						{
+							b.Differences[instanceID] = difference;
+						}
+						else
+						{
+							b.Differences.Remove(instanceID);
+						}
 					}
 					else
 					{
-						b.Differences.Add(instanceID, difference);
+						if (difference != null)
+						{
+							b.Differences.Add(instanceID, difference);
+						}
 					}
 				}
 			}

@@ -129,10 +129,27 @@ namespace PartsTreeSystemExample
 				{
 					context.CommandManager.StartEditFields(context.NodeTreeGroup, context.NodeTree, state.SelectedNode, state.Env);
 
-					void updateFields(NodeTreeGroupContext context, Node selectedNode, FieldGetterSetter getterSetter)
+					void updateFields(NodeTreeGroupContext context, Node selectedNode, FieldGetterSetter[] getterSetters)
 					{
+						var prop = context.EditorProperty.Properties.FirstOrDefault(_ => _.InstanceID == selectedNode.InstanceID);
+						bool isValueChanged = false;
+						if (prop != null)
+						{
+							isValueChanged = prop.IsValueEdited(getterSetters.Select(_ => _.GetName()).ToArray());
+						}
+
+						var getterSetter = getterSetters.Last();
 						var value = getterSetter.GetValue();
 						var name = getterSetter.GetName();
+
+						if (isValueChanged)
+						{
+							name = "*" + name;
+						}
+						else
+						{
+							name = " " + name;
+						}
 
 						if (value is string)
 						{
@@ -181,7 +198,7 @@ namespace PartsTreeSystemExample
 							for (int i = 0; i < v.Count; i++)
 							{
 								listGetterSetter.Reset(v, i);
-								updateFields(context, selectedNode, listGetterSetter);
+								updateFields(context, selectedNode, getterSetters.Concat(new[] { listGetterSetter }).ToArray());
 							}
 						}
 						else
@@ -197,7 +214,7 @@ namespace PartsTreeSystemExample
 					foreach (var field in fields)
 					{
 						getterSetter.Reset(state.SelectedNode, field);
-						updateFields(context, state.SelectedNode, getterSetter);
+						updateFields(context, state.SelectedNode, new[] { getterSetter });
 					}
 
 					context.CommandManager.EndEditFields(state.SelectedNode, state.Env);

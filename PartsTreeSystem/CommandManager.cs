@@ -261,20 +261,40 @@ namespace PartsTreeSystem
 			AddCommand(command);
 		}
 
-		public void AddNode(NodeTreeGroup nodeTreeGroup, NodeTree nodeTree, int parentID, NodeTreeGroup addingNodeTreeGroup, Environment env)
+		/// <summary>
+		/// Add a node
+		/// </summary>
+		/// <param name="nodeTreeGroup"></param>
+		/// <param name="nodeTree"></param>
+		/// <param name="parentID"></param>
+		/// <param name="addingNodeTreeGroup"></param>
+		/// <param name="env"></param>
+		/// <returns>InstanceID of added node</returns>
+		public int AddNode(NodeTreeGroup nodeTreeGroup, NodeTree nodeTree, int parentID, NodeTreeGroup addingNodeTreeGroup, Environment env)
 		{
 			var before = nodeTreeGroup.InternalData.Serialize();
 			var newNodeID = nodeTreeGroup.AddNodeTreeGroup(parentID, addingNodeTreeGroup, env);
 			var after = nodeTreeGroup.InternalData.Serialize();
 			AddNodeInternal(nodeTreeGroup, nodeTree, parentID, env, before, newNodeID, after, "AddNode(NodeTreeGroup)");
+			return newNodeID;
 		}
 
-		public void AddNode(NodeTreeGroup nodeTreeGroup, NodeTree nodeTree, int parentID, Type type, Environment env)
+		/// <summary>
+		/// Add a node
+		/// </summary>
+		/// <param name="nodeTreeGroup"></param>
+		/// <param name="nodeTree"></param>
+		/// <param name="parentID"></param>
+		/// <param name="type"></param>
+		/// <param name="env"></param>
+		/// <returns>InstanceID of added node</returns>
+		public int AddNode(NodeTreeGroup nodeTreeGroup, NodeTree nodeTree, int parentID, Type type, Environment env)
 		{
 			var before = nodeTreeGroup.InternalData.Serialize();
 			var newNodeID = nodeTreeGroup.AddNode(parentID, type, env);
 			var after = nodeTreeGroup.InternalData.Serialize();
 			AddNodeInternal(nodeTreeGroup, nodeTree, parentID, env, before, newNodeID, after, "AddNode");
+			return newNodeID;
 		}
 
 		public void RemoveNode(NodeTreeGroup nodeTreeGroup, NodeTree nodeTree, int nodeID, Environment env)

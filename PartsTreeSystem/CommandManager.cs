@@ -341,6 +341,54 @@ namespace PartsTreeSystem
 			AddCommand(command);
 		}
 
+		public void MoveNode(NodeTreeGroup nodeTreeGroup, NodeTree nodeTree, int nodeID, int parentID, int index, Environment env)
+		{
+			if (!nodeTreeGroup.CanRemoveNode(nodeID, env))
+			{
+				return;
+			}
+
+			var targetNode = nodeTree.FindInstance(nodeID) as INode;
+			var parentNode = nodeTree.FindInstance(parentID) as INode;
+
+			if (targetNode == null || parentNode == null)
+			{
+				return;
+			}
+
+			var childrenGroupIds = parentNode.GetChildren().Select(_ => _.InstanceID).ToArray();
+
+			if (index < 0 || index > parentNode.GetChildren().Count)
+			{
+				return;
+			}
+
+			var before = nodeTreeGroup.InternalData.Serialize();
+
+			Dictionary<int, List<NodeTreeBase>> sorted = new Dictionary<int, List<NodeTreeBase>>();
+			foreach(var b in nodeTreeGroup.InternalData.Bases)
+			{
+				if(!sorted.ContainsKey(b.ParentID))
+				{
+					sorted.Add(b.ParentID, new List<NodeTreeBase>());
+				}
+
+				sorted[b.ParentID].Add(b);
+			}
+
+
+
+			// TODO
+			var movedBase = nodeTreeGroup.InternalData.Bases.FirstOrDefault(_ => _.IDRemapper.ContainsKey(nodeID));
+			movedBase.ParentID = parentID;
+
+			// sort...
+
+			var after = nodeTreeGroup.InternalData.Serialize();
+
+			// TODO
+		}
+
 		public void StartEditFields(Asset asset, IAssetInstanceRoot root, IInstanceID o, Environment env)
 		{
 			var state = new EditFieldState { Target = o, Asset = asset, Root = root };

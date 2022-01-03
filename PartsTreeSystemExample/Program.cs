@@ -470,6 +470,11 @@ namespace PartsTreeSystemExample
 			Children.RemoveAll(_ => _.InstanceID == instanceID);
 		}
 
+		public void InsertChild(int index, PartsTreeSystem.INode node)
+		{
+			Children.Insert(index, node as Node);
+		}
+
 		public IReadOnlyCollection<PartsTreeSystem.INode> GetChildren()
 		{
 			return Children;

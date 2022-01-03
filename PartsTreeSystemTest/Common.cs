@@ -23,6 +23,11 @@ namespace PartsTreeSystemTest
 			Children.RemoveAll(_ => _.InstanceID == instanceID);
 		}
 
+		public void InsertChild(int index, INode node)
+		{
+			Children.Insert(index, node as Node);
+		}
+
 		public IReadOnlyCollection<INode> GetChildren()
 		{
 			return Children;

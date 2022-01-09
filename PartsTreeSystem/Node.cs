@@ -22,6 +22,8 @@ namespace PartsTreeSystem
 
 		public void RemoveChild(int instanceID);
 
+		public void InsertChild(int index, INode node);
+
 		public IReadOnlyCollection<INode> GetChildren();
 	}
 }

@@ -341,6 +341,120 @@ namespace PartsTreeSystem
 			AddCommand(command);
 		}
 
+		public void MoveNode(NodeTreeGroup nodeTreeGroup, NodeTree nodeTree, int nodeID, int insertedParentNodeID, int index, Environment env)
+		{
+			if (!nodeTreeGroup.CanRemoveNode(nodeID, env))
+			{
+				return;
+			}
+
+			var targetNode = nodeTree.FindInstance(nodeID) as INode;
+			var insertedParentNode = nodeTree.FindInstance(insertedParentNodeID) as INode;
+
+			if (targetNode == null || insertedParentNode == null)
+			{
+				return;
+			}
+
+			if (index < 0 || index > insertedParentNode.GetChildren().Count)
+			{
+				return;
+			}
+
+			var before = nodeTreeGroup.InternalData.Serialize();
+
+			var insertingNodeBase = nodeTreeGroup.InternalData.Bases.FirstOrDefault(_ => _.IDRemapper.ContainsValue(nodeID));
+
+			var previoudParentNodeID = insertingNodeBase.ParentID;
+
+			var sortedNodeGroups = new Dictionary<int, List<NodeTreeBase>>();
+			foreach (var b in nodeTreeGroup.InternalData.Bases)
+			{
+				if (!sortedNodeGroups.ContainsKey(b.ParentID))
+				{
+					sortedNodeGroups.Add(b.ParentID, new List<NodeTreeBase>());
+				}
+
+				sortedNodeGroups[b.ParentID].Add(b);
+			}
+
+			int originalIndex = -1;
+			foreach (var b in sortedNodeGroups)
+			{
+				if (b.Key == insertingNodeBase.ParentID)
+				{
+					originalIndex = b.Value.IndexOf(insertingNodeBase);
+					b.Value.Remove(insertingNodeBase);
+				}
+			}
+
+			insertingNodeBase.ParentID = insertedParentNodeID;
+
+			sortedNodeGroups[insertedParentNodeID].Insert(index, insertingNodeBase);
+
+			var sortedBases = new List<NodeTreeBase>();
+			const int rootNodeID = -1;
+			var root = sortedNodeGroups.FirstOrDefault(_ => _.Key == rootNodeID);
+			sortedBases.AddRange(root.Value);
+			sortedNodeGroups.Remove(-1);
+
+			while (sortedNodeGroups.Count > 0)
+			{
+				var keys = sortedNodeGroups.Keys.ToArray();
+
+				foreach (var key in keys)
+				{
+					if (sortedBases.Any(_ => _.IDRemapper.ContainsValue(key)))
+					{
+						sortedBases.AddRange(sortedNodeGroups[key]);
+						sortedNodeGroups.Remove(key);
+					}
+				}
+			}
+
+			nodeTreeGroup.InternalData.Bases = sortedBases.ToList();
+
+			var after = nodeTreeGroup.InternalData.Serialize();
+
+			Action execute = () =>
+			{
+				var node = nodeTree.FindInstance(nodeID) as INode;
+				var insertedParentNode = nodeTree.FindInstance(insertedParentNodeID) as INode;
+				var previousParentNode = nodeTree.FindInstance(previoudParentNodeID) as INode;
+				previousParentNode.RemoveChild(nodeID);
+				insertedParentNode.InsertChild(index, node);
+			};
+
+			execute();
+
+			var command = new DelegateCommand();
+			command.OnExecute = () =>
+			{
+				nodeTreeGroup.InternalData = NodeTreeGroupInternalData.Deserialize(after);
+				execute();
+			};
+
+			command.OnUnexecute = () =>
+			{
+				var previousNodeParent = nodeTree.FindInstance(previoudParentNodeID) as INode;
+				var parentNode = nodeTree.FindInstance(insertedParentNodeID) as INode;
+				var node = nodeTree.FindInstance(nodeID) as INode;
+				if (previousNodeParent != null)
+				{
+					parentNode.RemoveChild(nodeID);
+					previousNodeParent.InsertChild(originalIndex, node);
+				}
+
+				nodeTreeGroup.InternalData = NodeTreeGroupInternalData.Deserialize(before);
+			};
+
+			command.Name = "MoveNode";
+			command.Detail = string.Empty;
+
+			AddCommand(command);
+
+		}
+
 		public void StartEditFields(Asset asset, IAssetInstanceRoot root, IInstanceID o, Environment env)
 		{
 			var state = new EditFieldState { Target = o, Asset = asset, Root = root };

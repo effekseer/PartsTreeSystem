@@ -8,6 +8,16 @@ namespace PartsTreeSystemTest
 {
 	public class Helper
 	{
+		public static PartsTreeSystem.INode GetChild(PartsTreeSystem.INode node, IEnumerable<int> indexes)
+		{
+			foreach (var index in indexes)
+			{
+				node = node.GetChildren().ElementAt(index);
+			}
+
+			return node;
+		}
+
 		class Visitor
 		{
 			Dictionary<object, System.Tuple<object, object>> instancePairs = new Dictionary<object, System.Tuple<object, object>>();

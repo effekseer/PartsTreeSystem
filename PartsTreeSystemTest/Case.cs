@@ -89,20 +89,20 @@ namespace PartsTreeSystemTest
 			var node2 = commandManager.AddNode(nodeTreeGroup, instance, root.InstanceID, typeof(Node), env);
 			Assert.AreEqual(instance.Root.GetChildren().Count(), 2);
 
-			Assert.AreEqual(instance.Root.GetChildren().ElementAt(0).InstanceID, node1);
-			Assert.AreEqual(instance.Root.GetChildren().ElementAt(1).InstanceID, node2);
+			Assert.AreEqual(Helper.GetChild(instance.Root, new[] { 0 }).InstanceID, node1);
+			Assert.AreEqual(Helper.GetChild(instance.Root, new[] { 1 }).InstanceID, node2);
 
 			commandManager.MoveNode(nodeTreeGroup, instance, node1, root.InstanceID, 1, env);
-			Assert.AreEqual(instance.Root.GetChildren().ElementAt(1).InstanceID, node1);
-			Assert.AreEqual(instance.Root.GetChildren().ElementAt(0).InstanceID, node2);
+			Assert.AreEqual(Helper.GetChild(instance.Root, new[] { 1 }).InstanceID, node1);
+			Assert.AreEqual(Helper.GetChild(instance.Root, new[] { 0 }).InstanceID, node2);
 
 			commandManager.Undo(env);
-			Assert.AreEqual(instance.Root.GetChildren().ElementAt(0).InstanceID, node1);
-			Assert.AreEqual(instance.Root.GetChildren().ElementAt(1).InstanceID, node2);
+			Assert.AreEqual(Helper.GetChild(instance.Root, new[] { 0 }).InstanceID, node1);
+			Assert.AreEqual(Helper.GetChild(instance.Root, new[] { 1 }).InstanceID, node2);
 
 			commandManager.Redo(env);
-			Assert.AreEqual(instance.Root.GetChildren().ElementAt(1).InstanceID, node1);
-			Assert.AreEqual(instance.Root.GetChildren().ElementAt(0).InstanceID, node2);
+			Assert.AreEqual(Helper.GetChild(instance.Root, new[] { 1 }).InstanceID, node1);
+			Assert.AreEqual(Helper.GetChild(instance.Root, new[] { 0 }).InstanceID, node2);
 		}
 
 		[Test]
@@ -120,23 +120,22 @@ namespace PartsTreeSystemTest
 
 			var node1 = commandManager.AddNode(nodeTreeGroup, instance, root.InstanceID, typeof(Node), env);
 			var node2 = commandManager.AddNode(nodeTreeGroup, instance, nodeChild, typeof(Node), env);
-			
-			Assert.AreEqual(instance.Root.GetChildren().ElementAt(1).InstanceID, node1);
-			Assert.AreEqual(instance.Root.GetChildren().ElementAt(0).GetChildren().ElementAt(0).InstanceID, node2);
+
+			Assert.AreEqual(Helper.GetChild(instance.Root, new[] { 1 }).InstanceID, node1);
+			Assert.AreEqual(Helper.GetChild(instance.Root, new[] { 0, 0 }).InstanceID, node2);
 
 			commandManager.MoveNode(nodeTreeGroup, instance, node1, nodeChild, 1, env);
-			Assert.AreEqual(instance.Root.GetChildren().ElementAt(0).GetChildren().ElementAt(0).InstanceID, node2);
-			Assert.AreEqual(instance.Root.GetChildren().ElementAt(0).GetChildren().ElementAt(1).InstanceID, node1);
+			Assert.AreEqual(Helper.GetChild(instance.Root, new[] { 0, 0 }).InstanceID, node2);
+			Assert.AreEqual(Helper.GetChild(instance.Root, new[] { 0, 1 }).InstanceID, node1);
 
 			commandManager.Undo(env);
-			Assert.AreEqual(instance.Root.GetChildren().ElementAt(1).InstanceID, node1);
-			Assert.AreEqual(instance.Root.GetChildren().ElementAt(0).GetChildren().ElementAt(0).InstanceID, node2);
+			Assert.AreEqual(Helper.GetChild(instance.Root, new[] { 1 }).InstanceID, node1);
+			Assert.AreEqual(Helper.GetChild(instance.Root, new[] { 0, 0 }).InstanceID, node2);
 
 			commandManager.Redo(env);
-			Assert.AreEqual(instance.Root.GetChildren().ElementAt(0).GetChildren().ElementAt(0).InstanceID, node2);
-			Assert.AreEqual(instance.Root.GetChildren().ElementAt(0).GetChildren().ElementAt(1).InstanceID, node1);
+			Assert.AreEqual(Helper.GetChild(instance.Root, new[] { 0, 0 }).InstanceID, node2);
+			Assert.AreEqual(Helper.GetChild(instance.Root, new[] { 0, 1 }).InstanceID, node1);
 		}
-
 
 		[Test]
 		public void ChangeValue()

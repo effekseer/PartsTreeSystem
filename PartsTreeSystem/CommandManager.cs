@@ -365,7 +365,7 @@ namespace PartsTreeSystem
 
 			var before = nodeTreeGroup.InternalData.Serialize();
 
-			var movedBase = nodeTreeGroup.InternalData.Bases.FirstOrDefault(_ => _.IDRemapper.ContainsKey(nodeID));
+			var movedBase = nodeTreeGroup.InternalData.Bases.FirstOrDefault(_ => _.IDRemapper.ContainsValue(nodeID));
 
 			var oldParentId = movedBase.ParentID;
 
@@ -419,9 +419,6 @@ namespace PartsTreeSystem
 
 			var after = nodeTreeGroup.InternalData.Serialize();
 
-			// TODO
-
-
 			Action execute = () =>
 			{
 				var node = nodeTree.FindInstance(nodeID) as INode;
@@ -442,8 +439,8 @@ namespace PartsTreeSystem
 
 			command.OnUnexecute = () =>
 			{
-				var oldParent = nodeTree.FindParent(oldParentId);
-				var parent = nodeTree.FindParent(parentID);
+				var oldParent = nodeTree.FindInstance(oldParentId) as INode;
+				var parent = nodeTree.FindInstance(parentID) as INode;
 				var node = nodeTree.FindInstance(nodeID) as INode;
 				if (oldParent != null)
 				{

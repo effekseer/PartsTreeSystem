@@ -341,7 +341,7 @@ namespace PartsTreeSystem
 			AddCommand(command);
 		}
 
-		public void MoveNode(NodeTreeGroup nodeTreeGroup, NodeTree nodeTree, int nodeID, int parentID, int index, Environment env)
+		public void MoveNode(NodeTreeGroup nodeTreeGroup, NodeTree nodeTree, int nodeID, int insertedParentNodeID, int index, Environment env)
 		{
 			if (!nodeTreeGroup.CanRemoveNode(nodeID, env))
 			{
@@ -349,68 +349,65 @@ namespace PartsTreeSystem
 			}
 
 			var targetNode = nodeTree.FindInstance(nodeID) as INode;
-			var parentNode = nodeTree.FindInstance(parentID) as INode;
+			var insertedParentNode = nodeTree.FindInstance(insertedParentNodeID) as INode;
 
-			if (targetNode == null || parentNode == null)
+			if (targetNode == null || insertedParentNode == null)
 			{
 				return;
 			}
 
-			var childrenGroupIds = parentNode.GetChildren().Select(_ => _.InstanceID).ToArray();
-
-			if (index < 0 || index > parentNode.GetChildren().Count)
+			if (index < 0 || index > insertedParentNode.GetChildren().Count)
 			{
 				return;
 			}
 
 			var before = nodeTreeGroup.InternalData.Serialize();
 
-			var movedBase = nodeTreeGroup.InternalData.Bases.FirstOrDefault(_ => _.IDRemapper.ContainsValue(nodeID));
+			var insertingNodeBase = nodeTreeGroup.InternalData.Bases.FirstOrDefault(_ => _.IDRemapper.ContainsValue(nodeID));
 
-			var oldParentId = movedBase.ParentID;
+			var previoudParentNodeID = insertingNodeBase.ParentID;
 
-			Dictionary<int, List<NodeTreeBase>> sorted = new Dictionary<int, List<NodeTreeBase>>();
+			var sortedNodeGroups = new Dictionary<int, List<NodeTreeBase>>();
 			foreach (var b in nodeTreeGroup.InternalData.Bases)
 			{
-				if (!sorted.ContainsKey(b.ParentID))
+				if (!sortedNodeGroups.ContainsKey(b.ParentID))
 				{
-					sorted.Add(b.ParentID, new List<NodeTreeBase>());
+					sortedNodeGroups.Add(b.ParentID, new List<NodeTreeBase>());
 				}
 
-				sorted[b.ParentID].Add(b);
+				sortedNodeGroups[b.ParentID].Add(b);
 			}
 
-			int oldIndex = -1;
-			foreach (var b in sorted)
+			int originalIndex = -1;
+			foreach (var b in sortedNodeGroups)
 			{
-				if (b.Key == movedBase.ParentID)
+				if (b.Key == insertingNodeBase.ParentID)
 				{
-					oldIndex = b.Value.IndexOf(movedBase);
-					b.Value.Remove(movedBase);
+					originalIndex = b.Value.IndexOf(insertingNodeBase);
+					b.Value.Remove(insertingNodeBase);
 				}
 			}
 
-			movedBase.ParentID = parentID;
+			insertingNodeBase.ParentID = insertedParentNodeID;
 
-			sorted[parentID].Insert(index, movedBase);
+			sortedNodeGroups[insertedParentNodeID].Insert(index, insertingNodeBase);
 
-			// find root
-			List<NodeTreeBase> sortedBases = new List<NodeTreeBase>();
-
-			var root = sorted.FirstOrDefault(_ => _.Key == -1);
+			var sortedBases = new List<NodeTreeBase>();
+			const int rootNodeID = -1;
+			var root = sortedNodeGroups.FirstOrDefault(_ => _.Key == rootNodeID);
 			sortedBases.AddRange(root.Value);
-			sorted.Remove(-1);
+			sortedNodeGroups.Remove(-1);
 
-			while (sorted.Count > 0)
+			while (sortedNodeGroups.Count > 0)
 			{
-				var keys = sorted.Keys.ToArray();
+				var keys = sortedNodeGroups.Keys.ToArray();
 
 				foreach (var key in keys)
 				{
 					if (sortedBases.Any(_ => _.IDRemapper.ContainsValue(key)))
 					{
-						sortedBases.AddRange(sorted[key]);
-						sorted.Remove(key);
+						sortedBases.AddRange(sortedNodeGroups[key]);
+						sortedNodeGroups.Remove(key);
 					}
 				}
 			}
@@ -422,10 +419,10 @@ namespace PartsTreeSystem
 			Action execute = () =>
 			{
 				var node = nodeTree.FindInstance(nodeID) as INode;
-				var parentNode = nodeTree.FindInstance(parentID) as INode;
-				var oldParentNode = nodeTree.FindInstance(oldParentId) as INode;
-				oldParentNode.RemoveChild(nodeID);
-				parentNode.InsertChild(index, node);
+				var insertedParentNode = nodeTree.FindInstance(insertedParentNodeID) as INode;
+				var previousParentNode = nodeTree.FindInstance(previoudParentNodeID) as INode;
+				previousParentNode.RemoveChild(nodeID);
+				insertedParentNode.InsertChild(index, node);
 			};
 
 			execute();
@@ -439,13 +436,13 @@ namespace PartsTreeSystem
 
 			command.OnUnexecute = () =>
 			{
-				var oldParent = nodeTree.FindInstance(oldParentId) as INode;
-				var parent = nodeTree.FindInstance(parentID) as INode;
+				var previousNodeParent = nodeTree.FindInstance(previoudParentNodeID) as INode;
+				var parentNode = nodeTree.FindInstance(insertedParentNodeID) as INode;
 				var node = nodeTree.FindInstance(nodeID) as INode;
-				if (oldParent != null)
+				if (previousNodeParent != null)
 				{
-					parent.RemoveChild(nodeID);
-					oldParent.InsertChild(oldIndex, node);
+					parentNode.RemoveChild(nodeID);
+					previousNodeParent.InsertChild(originalIndex, node);
 				}
 
 				nodeTreeGroup.InternalData = NodeTreeGroupInternalData.Deserialize(before);

@@ -106,6 +106,39 @@ namespace PartsTreeSystemTest
 		}
 
 		[Test]
+		public void MoveNodeBetweenChildren()
+		{
+			var env = new PartsTreeSystem.Environment();
+			var commandManager = new CommandManager();
+			var nodeTreeGroup = new NodeTreeGroup();
+			nodeTreeGroup.Init(typeof(Node), env);
+
+			var instance = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
+			var root = instance.Root;
+			Assert.AreEqual(root.GetChildren().Count(), 0);
+			var nodeChild = commandManager.AddNode(nodeTreeGroup, instance, root.InstanceID, typeof(Node), env);
+
+			var node1 = commandManager.AddNode(nodeTreeGroup, instance, root.InstanceID, typeof(Node), env);
+			var node2 = commandManager.AddNode(nodeTreeGroup, instance, nodeChild, typeof(Node), env);
+			
+			Assert.AreEqual(instance.Root.GetChildren().ElementAt(1).InstanceID, node1);
+			Assert.AreEqual(instance.Root.GetChildren().ElementAt(0).GetChildren().ElementAt(0).InstanceID, node2);
+
+			commandManager.MoveNode(nodeTreeGroup, instance, node1, nodeChild, 1, env);
+			Assert.AreEqual(instance.Root.GetChildren().ElementAt(0).GetChildren().ElementAt(0).InstanceID, node2);
+			Assert.AreEqual(instance.Root.GetChildren().ElementAt(0).GetChildren().ElementAt(1).InstanceID, node1);
+
+			commandManager.Undo(env);
+			Assert.AreEqual(instance.Root.GetChildren().ElementAt(1).InstanceID, node1);
+			Assert.AreEqual(instance.Root.GetChildren().ElementAt(0).GetChildren().ElementAt(0).InstanceID, node2);
+
+			commandManager.Redo(env);
+			Assert.AreEqual(instance.Root.GetChildren().ElementAt(0).GetChildren().ElementAt(0).InstanceID, node2);
+			Assert.AreEqual(instance.Root.GetChildren().ElementAt(0).GetChildren().ElementAt(1).InstanceID, node1);
+		}
+
+
+		[Test]
 		public void ChangeValue()
 		{
 			var env = new PartsTreeSystem.Environment();

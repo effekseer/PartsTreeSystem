@@ -86,7 +86,11 @@ namespace PartsTreeSystem
 		{
 			List<Element> values = new List<Element>();
 
-			var fields = o.GetType().GetFields();
+			var fields = o.GetType().GetFields(
+				System.Reflection.BindingFlags.Public
+				| System.Reflection.BindingFlags.NonPublic
+				| System.Reflection.BindingFlags.Instance);
+
 			foreach (var field in fields)
 			{
 				var value = field.GetValue(o);

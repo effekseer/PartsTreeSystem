@@ -82,14 +82,68 @@ namespace PartsTreeSystem
 			}
 		}
 
+		public static List<System.Reflection.FieldInfo> GetFields(object o)
+		{
+			List<System.Reflection.FieldInfo> fields = new();
+
+			Type[] GetParentTypes(Type type)
+			{
+				System.Action<List<Type>, Type> func = null;
+				func = (ts, t) =>
+				{
+
+					if (t.IsPrimitive)
+					{
+						return;
+					}
+
+					if (t == typeof(string) || t == typeof(decimal) || t == typeof(object))
+					{
+						return;
+					}
+
+					ts.Add(t);
+					func(ts, t.BaseType);
+				};
+
+				List<Type> types = new List<Type>();
+				func(types, type);
+
+				return types.ToArray();
+			}
+
+			foreach (var t in GetParentTypes(o.GetType()))
+			{
+				t.GetFields(
+					System.Reflection.BindingFlags.NonPublic
+					| System.Reflection.BindingFlags.Instance
+					| System.Reflection.BindingFlags.DeclaredOnly
+					)
+					.Where(f =>
+					{
+						var serializeField = f.GetCustomAttributes(false);
+						return serializeField.Where(a => a.GetType().Name == "SerializeField").Count() >= 1;
+					})
+					.Concat(
+						t.GetFields(
+							System.Reflection.BindingFlags.Public
+							| System.Reflection.BindingFlags.Instance
+							| System.Reflection.BindingFlags.DeclaredOnly
+							)
+					)
+					.ToList()
+					.ForEach(f => fields.Add(f));
+			}
+
+			return fields;
+		}
+
+
 		List<Element> GetValues(object o, Environment env)
 		{
 			List<Element> values = new List<Element>();
 
-			var fields = o.GetType().GetFields(
-				System.Reflection.BindingFlags.Public
-				| System.Reflection.BindingFlags.NonPublic
-				| System.Reflection.BindingFlags.Instance);
+			var fields = GetFields(o);
 
 			foreach (var field in fields)
 			{

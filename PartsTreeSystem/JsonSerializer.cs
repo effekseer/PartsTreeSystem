@@ -91,7 +91,7 @@ namespace PartsTreeSystem
 			{
 				var o = new JObject();
 
-				var fields = value.GetType().GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+				var fields = FieldState.GetFields(value.GetType());
 
 
 				foreach (var field in fields)
@@ -113,7 +113,7 @@ namespace PartsTreeSystem
 			{
 				var dst = Activator.CreateInstance(type);
 
-				var fields = type.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+				var fields = FieldState.GetFields(type);
 
 				foreach (var field in fields)
 				{

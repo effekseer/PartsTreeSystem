@@ -238,7 +238,7 @@ namespace PartsTreeSystem
 				}
 				else
 				{
-					var field = obj.GetType().GetField(key.Name);
+					var field = FieldState.GetFields(obj).Find(_ => _.Name == key.Name);
 
 					// not found because a data structure was changed
 					if (field == null)
@@ -341,8 +341,8 @@ namespace PartsTreeSystem
 					}
 					else
 					{
-						var field = objects[i].GetType().GetField(k.Name);
 						var o = objects[i];
+						var field = FieldState.GetFields(o).Find(_ => _.Name == k.Name);
 
 						field.SetValue(o, objects[i + 1]);
 						objects[i] = o;

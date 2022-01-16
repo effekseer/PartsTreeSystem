@@ -122,7 +122,7 @@ namespace PartsTreeSystem
 					.Where(f =>
 					{
 						var serializeField = f.GetCustomAttributes(false);
-						return serializeField.Where(a => a.GetType().Name == "SerializeField").Count() >= 1;
+						return serializeField.Where(a => a.GetType() == typeof(SerializeField)).Count() >= 1;
 					})
 					.Concat(
 						t.GetFields(

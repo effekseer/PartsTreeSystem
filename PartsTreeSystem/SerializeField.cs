@@ -7,9 +7,5 @@ using System.Threading.Tasks;
 namespace PartsTreeSystem
 {
 	[AttributeUsage(AttributeTargets.Field)]
-	public class SerializeField : Attribute
-	{
-		public SerializeField() { }
-	}
-
+	public class SerializeField : Attribute {}
 }

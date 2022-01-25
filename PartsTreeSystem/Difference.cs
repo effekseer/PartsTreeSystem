@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
@@ -238,44 +238,77 @@ namespace PartsTreeSystem
 				}
 				else
 				{
-					var field = obj.GetType().GetField(key.Name);
+					var field = FieldState.GetFields(obj).Find(_ => _.Name == key.Name);
 
 					// not found because a data structure was changed
-					if (field == null)
+					if (field != null)
 					{
-						return null;
-					}
+						lastType = field.FieldType;
 
-					lastType = field.FieldType;
+						var o = field.GetValue(obj);
 
-					var o = field.GetValue(obj);
-
-					// Create an instance if it is an object type.
-					if (o is null)
-					{
-						if (field.FieldType == typeof(string))
+						// Create an instance if it is an object type.
+						if (o is null)
 						{
-							// String is an object type, but it can be serialized like a value, so there is no need to create an instance.
-							// (Calling GetConstructor raises an exception)
-						}
-						else if (field.FieldType.IsClass)
-						{
-							o = field.FieldType.GetConstructor(new Type[0]).Invoke(null);
+							if (field.FieldType == typeof(string))
+							{
+								// String is an object type, but it can be serialized like a value, so there is no need to create an instance.
+								// (Calling GetConstructor raises an exception)
+							}
+							else if (field.FieldType.IsClass)
+							{
+								o = field.FieldType.GetConstructor(new Type[0]).Invoke(null);
 
-							if (o == null)
+								if (o == null)
+								{
+									return null;
+								}
+
+								field.SetValue(obj, o);
+							}
+							else
 							{
 								return null;
 							}
-
-							field.SetValue(obj, o);
 						}
-						else
-						{
-							return null;
-						}
+						objects.Add(o);
 					}
 
-					objects.Add(o);
+					var property = FieldState.GetProperties(obj).Find(_ => _.Name == key.Name);
+
+					if (property != null)
+					{
+						lastType = property.PropertyType;
+
+						var o = property.GetValue(obj);
+
+						// Create an instance if it is an object type.
+						if (o is null)
+						{
+							if (property.PropertyType == typeof(string))
+							{
+								// String is an object type, but it can be serialized like a value, so there is no need to create an instance.
+								// (Calling GetConstructor raises an exception)
+							}
+							else if (property.PropertyType.IsClass)
+							{
+								o = property.PropertyType.GetConstructor(new Type[0]).Invoke(null);
+
+								if (o == null)
+								{
+									return null;
+								}
+
+								property.SetValue(obj, o);
+							}
+							else
+							{
+								return null;
+							}
+						}
+
+						objects.Add(o);
+					}
 				}
 			}
 
@@ -341,11 +374,19 @@ namespace PartsTreeSystem
 					}
 					else
 					{
-						var field = objects[i].GetType().GetField(k.Name);
 						var o = objects[i];
-
-						field.SetValue(o, objects[i + 1]);
-						objects[i] = o;
+						var field = FieldState.GetFields(o).Find(_ => _.Name == k.Name);
+						var property = FieldState.GetProperties(o).Find(_ => _.Name == k.Name);
+						if (field != null)
+						{
+							field.SetValue(o, objects[i + 1]);
+							objects[i] = o;
+						}
+						else if (property != null)
+						{
+							property.SetValue(o, objects[i + 1]);
+							objects[i] = o;
+						}
 					}
 				}
 			}

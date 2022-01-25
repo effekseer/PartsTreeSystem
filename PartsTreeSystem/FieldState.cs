@@ -126,17 +126,17 @@ namespace PartsTreeSystem
 		{
 			List<System.Reflection.PropertyInfo> properties = new();
 
-			foreach(var t in GetBaseTypes(o.GetType()))
+			foreach (var t in GetBaseTypes(o.GetType()))
 			{
 				t.GetProperties(
 					System.Reflection.BindingFlags.Public
 					| System.Reflection.BindingFlags.Instance
 					| System.Reflection.BindingFlags.DeclaredOnly)
-					.Where (p => 
-					{
-						var serializeField = p.GetCustomAttributes(false);
-						return serializeField.Where(a => a.GetType() == typeof(SerializeField)).Count() >= 1;
-					})
+					.Where(p =>
+				   {
+					   var serializeField = p.GetCustomAttributes(false);
+					   return serializeField.Where(a => a.GetType() == typeof(SerializeField)).Count() >= 1;
+				   })
 					.ToList()
 					.ForEach(p => properties.Add(p));
 			}
@@ -163,26 +163,26 @@ namespace PartsTreeSystem
 				}
 
 				var key = new AccessKey { Name = field.Name };
-				values.Add(new Element { Target = key, Value = converted});
+				values.Add(new Element { Target = key, Value = converted });
 			}
 
 			var properties = GetProperties(o);
-			foreach(var property in properties)
+			foreach (var property in properties)
 			{
 				var value = property.GetValue(o);
-				if(value is null)
+				if (value is null)
 				{
 					continue;
 				}
 
 				var converted = ConvertValue(value, env);
-				if(converted is null)
+				if (converted is null)
 				{
 					continue;
 				}
 
 				var key = new AccessKey { Name = property.Name };
-				values.Add(new Element { Target= key, Value = converted});
+				values.Add(new Element { Target = key, Value = converted });
 			}
 			return values;
 		}

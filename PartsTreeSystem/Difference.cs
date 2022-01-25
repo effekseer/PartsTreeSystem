@@ -238,7 +238,7 @@ namespace PartsTreeSystem
 				}
 				else
 				{
-					var field = FieldState.GetFields(obj).Find(_ => _.Name == key.Name); 
+					var field = FieldState.GetFields(obj).Find(_ => _.Name == key.Name);
 
 					// not found because a data structure was changed
 					if (field != null)
@@ -285,7 +285,7 @@ namespace PartsTreeSystem
 						// Create an instance if it is an object type.
 						if (o is null)
 						{
-							if (property.PropertyType== typeof(string))
+							if (property.PropertyType == typeof(string))
 							{
 								// String is an object type, but it can be serialized like a value, so there is no need to create an instance.
 								// (Calling GetConstructor raises an exception)
@@ -377,12 +377,12 @@ namespace PartsTreeSystem
 						var o = objects[i];
 						var field = FieldState.GetFields(o).Find(_ => _.Name == k.Name);
 						var property = FieldState.GetProperties(o).Find(_ => _.Name == k.Name);
-						if(field != null)
+						if (field != null)
 						{
 							field.SetValue(o, objects[i + 1]);
 							objects[i] = o;
 						}
-						else if(property != null)
+						else if (property != null)
 						{
 							property.SetValue(o, objects[i + 1]);
 							objects[i] = o;

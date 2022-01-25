@@ -6,11 +6,6 @@ using System.Linq;
 
 namespace PartsTreeSystem
 {
-	[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
-	public class SerializeField : Attribute
-	{
-	}
-
 	public class FieldState
 	{
 		public class Element

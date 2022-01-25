@@ -6,6 +6,6 @@ using System.Threading.Tasks;
 
 namespace PartsTreeSystem
 {
-	[AttributeUsage(AttributeTargets.Field)]
+	[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
 	public class SerializeField : Attribute {}
 }

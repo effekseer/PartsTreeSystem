@@ -101,6 +101,15 @@ namespace PartsTreeSystem
 					o.Add(field.Name, ConvertCSToJson(fv));
 				}
 
+				var properties = FieldState.GetProperties(value.GetType());
+
+				foreach(var property in properties)
+				{
+					var pv = property.GetValue(value);
+
+					o.Add(property.Name, ConvertCSToJson(pv));
+				}
+
 				return o;
 			}
 		}
@@ -114,17 +123,33 @@ namespace PartsTreeSystem
 				var dst = Activator.CreateInstance(type);
 
 				var fields = FieldState.GetFields(type);
-
-				foreach (var field in fields)
+				if(fields != null)
 				{
-					if (!jobj.ContainsKey(field.Name))
+					foreach (var field in fields)
 					{
-						continue;
+						if (!jobj.ContainsKey(field.Name))
+						{
+							continue;
+						}
+
+						field.SetValue(dst, ConvertJsonToCS(field.FieldType, jobj[field.Name]));
 					}
 
-					field.SetValue(dst, ConvertJsonToCS(field.FieldType, jobj[field.Name]));
 				}
 
+				var properties = FieldState.GetProperties(type);
+				if(properties != null)
+				{
+					foreach(var property in properties)
+					{
+						if (!jobj.ContainsKey(property.Name))
+						{
+							continue;
+						}
+
+						property.SetValue(dst, ConvertJsonToCS(property.PropertyType, jobj[property.Name]));
+					}
+				}
 				return dst;
 			}
 			else if (token is JArray jarray)

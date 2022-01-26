@@ -382,7 +382,7 @@ namespace PartsTreeSystem
 							field.SetValue(o, objects[i + 1]);
 							objects[i] = o;
 						}
-						else if (property != null)
+						if (property != null)
 						{
 							property.SetValue(o, objects[i + 1]);
 							objects[i] = o;

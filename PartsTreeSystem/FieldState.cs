@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
@@ -81,12 +81,84 @@ namespace PartsTreeSystem
 				return GetValues(o, env);
 			}
 		}
+		private static Type[] GetBaseTypes(Type type)
+		{
+			System.Action<List<Type>, Type> func = null;
+			func = (ts, t) =>
+			{
+				if (t.IsPrimitive)
+				{
+					return;
+				}
 
+				if (t == typeof(string) || t == typeof(decimal) || t == typeof(object))
+				{
+					return;
+				}
+
+				ts.Add(t);
+				func(ts, t.BaseType);
+			};
+
+			List<Type> types = new List<Type>();
+			func(types, type);
+
+			return types.ToArray();
+		}
+
+		public static List<System.Reflection.FieldInfo> GetFields(object o)
+		{
+			return GetFields(o.GetType());
+		}
+
+		public static List<System.Reflection.FieldInfo> GetFields(Type type)
+		{
+			List<System.Reflection.FieldInfo> fields = new();
+
+			foreach (var t in GetBaseTypes(type))
+			{
+				t.GetFields(
+					System.Reflection.BindingFlags.Public
+					| System.Reflection.BindingFlags.NonPublic
+					| System.Reflection.BindingFlags.Instance
+					| System.Reflection.BindingFlags.DeclaredOnly
+					).ToList().ForEach(f => fields.Add(f));
+			}
+
+			return fields;
+		}
+
+		public static List<System.Reflection.PropertyInfo> GetProperties(object o)
+		{
+			return GetProperties(o.GetType());
+		}
+
+		public static List<System.Reflection.PropertyInfo> GetProperties(Type type)
+		{
+			List<System.Reflection.PropertyInfo> properties = new();
+
+			foreach (var t in GetBaseTypes(type))
+			{
+				t.GetProperties(
+					System.Reflection.BindingFlags.Public
+					| System.Reflection.BindingFlags.Instance
+					| System.Reflection.BindingFlags.DeclaredOnly)
+					.Where(p =>
+					{
+						var serializeField = p.GetCustomAttributes(false);
+						return serializeField.Where(a => a.GetType() == typeof(SerializeField)).Count() >= 1;
+					})
+					.ToList()
+					.ForEach(p => properties.Add(p));
+			}
+
+			return properties;
+		}
 		List<Element> GetValues(object o, Environment env)
 		{
 			List<Element> values = new List<Element>();
 
-			var fields = o.GetType().GetFields();
+			var fields = GetFields(o);
 			foreach (var field in fields)
 			{
 				var value = field.GetValue(o);
@@ -105,6 +177,24 @@ namespace PartsTreeSystem
 				values.Add(new Element { Target = key, Value = converted });
 			}
 
+			var properties = GetProperties(o);
+			foreach (var property in properties)
+			{
+				var value = property.GetValue(o);
+				if (value is null)
+				{
+					continue;
+				}
+
+				var converted = ConvertValue(value, env);
+				if (converted is null)
+				{
+					continue;
+				}
+
+				var key = new AccessKey { Name = property.Name };
+				values.Add(new Element { Target = key, Value = converted });
+			}
 			return values;
 		}
 

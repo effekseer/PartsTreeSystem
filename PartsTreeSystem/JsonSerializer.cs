@@ -91,7 +91,7 @@ namespace PartsTreeSystem
 			{
 				var o = new JObject();
 
-				var fields = value.GetType().GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+				var fields = FieldState.GetFields(value);
 
 
 				foreach (var field in fields)
@@ -99,6 +99,15 @@ namespace PartsTreeSystem
 					var fv = field.GetValue(value);
 
 					o.Add(field.Name, ConvertCSToJson(fv));
+				}
+
+				var properties = FieldState.GetProperties(value);
+
+				foreach (var property in properties)
+				{
+					var pv = property.GetValue(value);
+
+					o.Add(property.Name, ConvertCSToJson(pv));
 				}
 
 				return o;
@@ -113,18 +122,34 @@ namespace PartsTreeSystem
 			{
 				var dst = Activator.CreateInstance(type);
 
-				var fields = type.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-
-				foreach (var field in fields)
+				var fields = FieldState.GetFields(type);
+				if (fields != null)
 				{
-					if (!jobj.ContainsKey(field.Name))
+					foreach (var field in fields)
 					{
-						continue;
+						if (!jobj.ContainsKey(field.Name))
+						{
+							continue;
+						}
+
+						field.SetValue(dst, ConvertJsonToCS(field.FieldType, jobj[field.Name]));
 					}
 
-					field.SetValue(dst, ConvertJsonToCS(field.FieldType, jobj[field.Name]));
 				}
 
+				var properties = FieldState.GetProperties(type);
+				if (properties != null)
+				{
+					foreach (var property in properties)
+					{
+						if (!jobj.ContainsKey(property.Name))
+						{
+							continue;
+						}
+
+						property.SetValue(dst, ConvertJsonToCS(property.PropertyType, jobj[property.Name]));
+					}
+				}
 				return dst;
 			}
 			else if (token is JArray jarray)

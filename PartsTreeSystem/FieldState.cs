@@ -108,12 +108,18 @@ namespace PartsTreeSystem
 
 		public static List<System.Reflection.FieldInfo> GetFields(object o)
 		{
+			return GetFields(o.GetType());
+		}
+
+		public static List<System.Reflection.FieldInfo> GetFields(Type type)
+		{
 			List<System.Reflection.FieldInfo> fields = new();
 
-			foreach (var t in GetBaseTypes(o.GetType()))
+			foreach (var t in GetBaseTypes(type))
 			{
 				t.GetFields(
 					System.Reflection.BindingFlags.Public
+					| System.Reflection.BindingFlags.NonPublic
 					| System.Reflection.BindingFlags.Instance
 					| System.Reflection.BindingFlags.DeclaredOnly
 					).ToList().ForEach(f => fields.Add(f));
@@ -124,19 +130,24 @@ namespace PartsTreeSystem
 
 		public static List<System.Reflection.PropertyInfo> GetProperties(object o)
 		{
+			return GetProperties(o.GetType());
+		}
+
+		public static List<System.Reflection.PropertyInfo> GetProperties(Type type)
+		{
 			List<System.Reflection.PropertyInfo> properties = new();
 
-			foreach (var t in GetBaseTypes(o.GetType()))
+			foreach (var t in GetBaseTypes(type))
 			{
 				t.GetProperties(
 					System.Reflection.BindingFlags.Public
 					| System.Reflection.BindingFlags.Instance
 					| System.Reflection.BindingFlags.DeclaredOnly)
 					.Where(p =>
-				   {
-					   var serializeField = p.GetCustomAttributes(false);
-					   return serializeField.Where(a => a.GetType() == typeof(SerializeField)).Count() >= 1;
-				   })
+					{
+						var serializeField = p.GetCustomAttributes(false);
+						return serializeField.Where(a => a.GetType() == typeof(SerializeField)).Count() >= 1;
+					})
 					.ToList()
 					.ForEach(p => properties.Add(p));
 			}

@@ -91,7 +91,7 @@ namespace PartsTreeSystem
 			{
 				var o = new JObject();
 
-				var fields = FieldState.GetFields(value.GetType());
+				var fields = FieldState.GetFields(value);
 
 
 				foreach (var field in fields)
@@ -101,9 +101,9 @@ namespace PartsTreeSystem
 					o.Add(field.Name, ConvertCSToJson(fv));
 				}
 
-				var properties = FieldState.GetProperties(value.GetType());
+				var properties = FieldState.GetProperties(value);
 
-				foreach(var property in properties)
+				foreach (var property in properties)
 				{
 					var pv = property.GetValue(value);
 
@@ -123,7 +123,7 @@ namespace PartsTreeSystem
 				var dst = Activator.CreateInstance(type);
 
 				var fields = FieldState.GetFields(type);
-				if(fields != null)
+				if (fields != null)
 				{
 					foreach (var field in fields)
 					{
@@ -138,9 +138,9 @@ namespace PartsTreeSystem
 				}
 
 				var properties = FieldState.GetProperties(type);
-				if(properties != null)
+				if (properties != null)
 				{
-					foreach(var property in properties)
+					foreach (var property in properties)
 					{
 						if (!jobj.ContainsKey(property.Name))
 						{

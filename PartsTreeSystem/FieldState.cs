@@ -119,10 +119,24 @@ namespace PartsTreeSystem
 			{
 				t.GetFields(
 					System.Reflection.BindingFlags.Public
-					| System.Reflection.BindingFlags.NonPublic
 					| System.Reflection.BindingFlags.Instance
 					| System.Reflection.BindingFlags.DeclaredOnly
-					).ToList().ForEach(f => fields.Add(f));
+					)
+					.Concat(
+						t.GetFields(
+							System.Reflection.BindingFlags.NonPublic
+							| System.Reflection.BindingFlags.Instance
+							| System.Reflection.BindingFlags.DeclaredOnly)
+						.Where(
+							f =>
+							{
+								var attributes = f.GetCustomAttributes(false);
+								return attributes.Where(a => a.GetType() == typeof(SerializeField)).Count() >= 1;
+							}	
+						)
+					)
+					
+					.ToList().ForEach(f => fields.Add(f));
 			}
 
 			return fields;

@@ -132,10 +132,10 @@ namespace PartsTreeSystem
 							{
 								var attributes = f.GetCustomAttributes(false);
 								return attributes.Where(a => a.GetType() == typeof(SerializeField)).Count() >= 1;
-							}	
+							}
 						)
 					)
-					
+
 					.ToList().ForEach(f => fields.Add(f));
 			}
 

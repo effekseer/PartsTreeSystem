@@ -91,7 +91,7 @@ namespace PartsTreeSystem
 			{
 				var o = new JObject();
 
-				var fields = FieldState.GetFields(value);
+				var fields = value.GetType().GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
 
 				foreach (var field in fields)
@@ -101,7 +101,7 @@ namespace PartsTreeSystem
 					o.Add(field.Name, ConvertCSToJson(fv));
 				}
 
-				var properties = FieldState.GetProperties(value);
+				var properties = value.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
 				foreach (var property in properties)
 				{

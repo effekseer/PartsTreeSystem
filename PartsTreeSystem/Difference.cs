@@ -18,6 +18,7 @@ namespace PartsTreeSystem
 
 		public IReadOnlyCollection<Modification> Modifications { get { return modifications; } }
 
+		[SerializeField]
 		List<Modification> modifications = new List<Modification>();
 
 		public void Add(AccessKeyGroup target, object value)
@@ -382,7 +383,7 @@ namespace PartsTreeSystem
 							field.SetValue(o, objects[i + 1]);
 							objects[i] = o;
 						}
-						else if (property != null)
+						if (property != null)
 						{
 							property.SetValue(o, objects[i + 1]);
 							objects[i] = o;

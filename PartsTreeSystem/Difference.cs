@@ -18,6 +18,7 @@ namespace PartsTreeSystem
 
 		public IReadOnlyCollection<Modification> Modifications { get { return modifications; } }
 
+		[SerializeField]
 		List<Modification> modifications = new List<Modification>();
 
 		public void Add(AccessKeyGroup target, object value)

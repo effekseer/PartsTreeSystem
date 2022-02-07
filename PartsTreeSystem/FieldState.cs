@@ -247,7 +247,7 @@ namespace PartsTreeSystem
 		/// </summary>
 		/// <param name="o"></param>
 		/// <param name="env"></param>
-    	public void Store(object o, Environment env)
+		public void Store(object o, Environment env)
 		{
 			currentValues = GetValues(o, env);
 		}

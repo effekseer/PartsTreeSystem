@@ -173,10 +173,10 @@ namespace PartsTreeSystem
 
 						foreach (var child in n.GetChildren())
 						{
-							var ret = findNode(id, child);
-							if (ret != null)
+							var found = findNode(id, child);
+							if (found != null)
 							{
-								return ret;
+								return found;
 							}
 						}
 
@@ -195,5 +195,4 @@ namespace PartsTreeSystem
 			return ret;
 		}
 	}
-
 }

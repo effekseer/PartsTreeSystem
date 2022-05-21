@@ -111,7 +111,7 @@ namespace PartsTreeSystem
 
 		public override CommandInformation GetInformation()
 		{
-			return new CommandInformation { Name = "ValueChange", Detail = string.Join('\n', DiffRedo.Modifications.Select(_ => _.Target.ToString())) };
+			return new CommandInformation { Name = "ValueChange", Detail = string.Join("\n", DiffRedo.Modifications.Select(_ => _.Target.ToString())) };
 		}
 	}
 
@@ -329,10 +329,10 @@ namespace PartsTreeSystem
 			{
 				nodeTreeGroup.InternalData = NodeTreeGroupInternalData.Deserialize(before);
 
-				var parentNode = nodeTree.FindInstance(parentNodeID) as INode;
+				var pn = nodeTree.FindInstance(parentNodeID) as INode;
 				var newNodeTree = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
 				var newNode = newNodeTree.FindInstance(nodeID);
-				parentNode.AddChild(newNode as INode);
+				pn.AddChild(newNode as INode);
 			};
 
 			command.Name = "RemoveNode";
@@ -419,10 +419,10 @@ namespace PartsTreeSystem
 			Action execute = () =>
 			{
 				var node = nodeTree.FindInstance(nodeID) as INode;
-				var insertedParentNode = nodeTree.FindInstance(insertedParentNodeID) as INode;
-				var previousParentNode = nodeTree.FindInstance(previoudParentNodeID) as INode;
-				previousParentNode.RemoveChild(nodeID);
-				insertedParentNode.InsertChild(index, node);
+				var insertedParentNodeInner = nodeTree.FindInstance(insertedParentNodeID) as INode;
+				var previousParentNodeInner = nodeTree.FindInstance(previoudParentNodeID) as INode;
+				previousParentNodeInner.RemoveChild(nodeID);
+				insertedParentNodeInner.InsertChild(index, node);
 			};
 
 			execute();

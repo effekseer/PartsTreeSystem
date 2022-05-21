@@ -40,7 +40,7 @@ namespace PartsTreeSystem
 
 		public override string ToString()
 		{
-			return string.Join('.', Keys.Select(_ => _.ToString()));
+			return string.Join(".", Keys.Select(_ => _.ToString()));
 		}
 	}
 

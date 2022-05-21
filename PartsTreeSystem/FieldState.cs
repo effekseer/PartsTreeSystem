@@ -113,7 +113,7 @@ namespace PartsTreeSystem
 
 		public static List<System.Reflection.FieldInfo> GetFields(Type type)
 		{
-			List<System.Reflection.FieldInfo> fields = new();
+			var fields = new List<System.Reflection.FieldInfo>();
 
 			foreach (var t in GetBaseTypes(type))
 			{
@@ -149,7 +149,7 @@ namespace PartsTreeSystem
 
 		public static List<System.Reflection.PropertyInfo> GetProperties(Type type)
 		{
-			List<System.Reflection.PropertyInfo> properties = new();
+			var properties = new List<System.Reflection.PropertyInfo>();
 
 			foreach (var t in GetBaseTypes(type))
 			{

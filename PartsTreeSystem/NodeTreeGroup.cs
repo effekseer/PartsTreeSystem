@@ -9,7 +9,7 @@ namespace PartsTreeSystem
 	{
 		public INode Root;
 
-		public IInstanceID? FindInstance(int id)
+		public IInstanceID FindInstance(int id)
 		{
 			return FindInstance(Root, id);
 		}
@@ -19,7 +19,7 @@ namespace PartsTreeSystem
 			return FindParent(Root, id);
 		}
 
-		IInstanceID? FindInstance(INode node, int id)
+		IInstanceID FindInstance(INode node, int id)
 		{
 			if (node.InstanceID == id)
 			{

@@ -8,22 +8,22 @@ namespace PartsTreeSystem
 {
 	public interface IInstanceID
 	{
-		public int InstanceID { get; set; }
+		int InstanceID { get; set; }
 	}
 
 	public interface IAssetInstanceRoot
 	{
-		public IInstanceID? FindInstance(int id);
+		IInstanceID FindInstance(int id);
 	}
 
 	public interface INode : IInstanceID
 	{
-		public void AddChild(INode node);
+		void AddChild(INode node);
 
-		public void RemoveChild(int instanceID);
+		void RemoveChild(int instanceID);
 
-		public void InsertChild(int index, INode node);
+		void InsertChild(int index, INode node);
 
-		public IReadOnlyCollection<INode> GetChildren();
+		IReadOnlyCollection<INode> GetChildren();
 	}
 }

@@ -42,9 +42,9 @@ namespace PartsTreeSystem
 			{
 				return o;
 			}
-			else if (type.GetInterfaces().Contains(typeof(IInstanceID)))
+			else if (type.GetInterfaces().Contains(typeof(IInstance)))
 			{
-				var v = o as IInstanceID;
+				var v = o as IInstance;
 				return v.InstanceID;
 			}
 			else if (type.IsSubclassOf(typeof(Asset)))

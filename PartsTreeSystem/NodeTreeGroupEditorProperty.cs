@@ -32,12 +32,12 @@ namespace PartsTreeSystem
 		public IReadOnlyList<NodeProperty> Properties { get { return nodeProperties; } }
 
 		NodeTreeGroup nodeTreeGroup;
-		Environment env;
+		Environment environment;
 
-		public NodeTreeGroupEditorProperty(NodeTreeGroup nodeTreeGroup, Environment env)
+		public NodeTreeGroupEditorProperty(NodeTreeGroup nodeTreeGroup, Environment environment)
 		{
 			this.nodeTreeGroup = nodeTreeGroup;
-			this.env = env;
+			this.environment = environment;
 			Rebuild();
 		}
 
@@ -51,12 +51,12 @@ namespace PartsTreeSystem
 
 				if (!string.IsNullOrEmpty(nodeBase.BaseType))
 				{
-					generator = env.GetType(nodeBase.BaseType);
+					generator = environment.GetType(nodeBase.BaseType);
 				}
 				else if (!string.IsNullOrEmpty(nodeBase.Template))
 				{
-					var path = Utility.GetAbsolutePath(env.GetAssetPath(nodeTreeGroup), nodeBase.Template);
-					generator = env.GetAsset(path);
+					var path = Utility.GetAbsolutePath(environment.GetAssetPath(nodeTreeGroup), nodeBase.Template);
+					generator = environment.GetAsset(path);
 				}
 
 				foreach (var remapper in nodeBase.IDRemapper)

@@ -316,7 +316,7 @@ namespace PartsTreeSystem
 			return new Hierarchy { Objects = objects, LastType = lastType };
 		}
 
-		public static void ApplyDifference(ref object target, Difference difference, Asset asset, IAssetInstanceRoot root, Environment env)
+		public static void ApplyDifference(ref object target, Difference difference, Asset asset, IInstanceContainer instanceContainer, Environment env)
 		{
 			foreach (var modification in difference.modifications)
 			{
@@ -342,10 +342,10 @@ namespace PartsTreeSystem
 				{
 					objects[objects.Count - 1] = null;
 				}
-				else if (lastType.GetInterfaces().Contains(typeof(IInstanceID)))
+				else if (lastType.GetInterfaces().Contains(typeof(IInstance)))
 				{
 					var id = Convert.ToInt32(modification.Value);
-					objects[objects.Count - 1] = root.FindInstance(id);
+					objects[objects.Count - 1] = instanceContainer.FindInstance(id);
 				}
 				else if (lastType.IsSubclassOf(typeof(Asset)))
 				{

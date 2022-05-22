@@ -45,7 +45,7 @@ namespace PartsTreeSystem
 	class ValueChangeCommand : Command
 	{
 		public Asset Asset;
-		public IAssetInstanceRoot Root;
+		public IInstanceContainer Container;
 		public int InstanceID { get; set; }
 
 		public Difference DiffRedo;
@@ -58,22 +58,22 @@ namespace PartsTreeSystem
 
 		public override void Execute(Environment env)
 		{
-			var instance = Root.FindInstance(InstanceID);
+			var instance = Container.FindInstance(InstanceID);
 			if (instance != null)
 			{
 				object obj = instance;
-				Difference.ApplyDifference(ref obj, DiffRedo, Asset, Root, env);
+				Difference.ApplyDifference(ref obj, DiffRedo, Asset, Container, env);
 			}
 
 			Asset.SetDifference(InstanceID, NewDifference);
 		}
 		public override void Unexecute(Environment env)
 		{
-			var instance = Root.FindInstance(InstanceID);
+			var instance = Container.FindInstance(InstanceID);
 			if (instance != null)
 			{
 				object obj = instance;
-				Difference.ApplyDifference(ref obj, DiffUndo, Asset, Root, env);
+				Difference.ApplyDifference(ref obj, DiffUndo, Asset, Container, env);
 			}
 
 			Asset.SetDifference(InstanceID, OldDifference);
@@ -82,7 +82,7 @@ namespace PartsTreeSystem
 		public static ValueChangeCommand Merge(ValueChangeCommand first, ValueChangeCommand second)
 		{
 			if (first.Asset != second.Asset ||
-			first.Root != second.Root ||
+			first.Container != second.Container ||
 			first.InstanceID != second.InstanceID)
 			{
 				return null;
@@ -96,7 +96,7 @@ namespace PartsTreeSystem
 			{
 				var cmd = new ValueChangeCommand();
 
-				cmd.Root = first.Root;
+				cmd.Container = first.Container;
 				cmd.InstanceID = first.InstanceID;
 				cmd.Asset = first.Asset;
 				cmd.DiffRedo = second.DiffRedo;
@@ -120,8 +120,8 @@ namespace PartsTreeSystem
 		class EditFieldState
 		{
 			public Asset Asset;
-			public IAssetInstanceRoot Root;
-			public IInstanceID Target;
+			public IInstanceContainer Container;
+			public IInstance Target;
 			public bool IsEdited = false;
 			public FieldState State = new FieldState();
 		}
@@ -455,14 +455,14 @@ namespace PartsTreeSystem
 
 		}
 
-		public void StartEditFields(Asset asset, IAssetInstanceRoot root, IInstanceID o, Environment env)
+		public void StartEditFields(Asset asset, IInstanceContainer instanceContainer, IInstance editedInstance, Environment environment)
 		{
-			var state = new EditFieldState { Target = o, Asset = asset, Root = root };
-			state.State.Store(o, env);
-			editFieldStates.Add(o, state);
+			var state = new EditFieldState { Target = editedInstance, Asset = asset, Container = instanceContainer };
+			state.State.Store(editedInstance, environment);
+			editFieldStates.Add(editedInstance, state);
 		}
 
-		public void NotifyEditFields(IInstanceID o)
+		public void NotifyEditFields(IInstance o)
 		{
 			if (editFieldStates.TryGetValue(o, out var v))
 			{
@@ -470,7 +470,7 @@ namespace PartsTreeSystem
 			}
 		}
 
-		public bool EndEditFields(IInstanceID o, Environment env)
+		public bool EndEditFields(IInstance o, Environment env)
 		{
 			if (editFieldStates.TryGetValue(o, out var v))
 			{
@@ -483,7 +483,7 @@ namespace PartsTreeSystem
 
 					var instanceID = v.Target.InstanceID;
 					var asset = v.Asset;
-					var root = v.Root;
+					var root = v.Container;
 
 					var oldDifference = asset.GetDifference(instanceID);
 
@@ -503,7 +503,7 @@ namespace PartsTreeSystem
 					var command = new ValueChangeCommand();
 
 					command.Asset = asset;
-					command.Root = root;
+					command.Container = root;
 					command.InstanceID = instanceID;
 					command.DiffRedo = diffRedo;
 					command.DiffUndo = diffUndo;

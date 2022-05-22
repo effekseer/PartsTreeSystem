@@ -5,11 +5,11 @@ using System.Linq;
 
 namespace PartsTreeSystem
 {
-	public class NodeTree : IAssetInstanceRoot
+	public class NodeTree : IInstanceContainer
 	{
 		public INode Root;
 
-		public IInstanceID FindInstance(int id)
+		public IInstance FindInstance(int id)
 		{
 			return FindInstance(Root, id);
 		}
@@ -19,7 +19,7 @@ namespace PartsTreeSystem
 			return FindParent(Root, id);
 		}
 
-		IInstanceID FindInstance(INode node, int id)
+		IInstance FindInstance(INode node, int id)
 		{
 			if (node.InstanceID == id)
 			{

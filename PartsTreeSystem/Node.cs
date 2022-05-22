@@ -6,17 +6,10 @@ using System.Linq;
 
 namespace PartsTreeSystem
 {
-	public interface IInstanceID
-	{
-		int InstanceID { get; set; }
-	}
-
-	public interface IAssetInstanceRoot
-	{
-		IInstanceID FindInstance(int id);
-	}
-
-	public interface INode : IInstanceID
+	/// <summary>
+	/// Special interface for a node in a tree structure
+	/// </summary>
+	public interface INode : IInstance
 	{
 		void AddChild(INode node);
 

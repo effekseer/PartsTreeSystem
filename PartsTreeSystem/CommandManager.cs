@@ -462,33 +462,32 @@ namespace PartsTreeSystem
 			editFieldStates.Add(editedInstance, state);
 		}
 
-		public void NotifyEditFields(IInstance o)
+		public void NotifyEditFields(IInstance instance)
 		{
-			if (editFieldStates.TryGetValue(o, out var v))
+			if (editFieldStates.TryGetValue(instance, out var v))
 			{
 				v.IsEdited = true;
 			}
 		}
 
-		public bool EndEditFields(IInstance o, Environment env)
+		public bool EndEditFields(IInstance o, Environment environment)
 		{
 			if (editFieldStates.TryGetValue(o, out var v))
 			{
 				if (v.IsEdited)
 				{
 					var fs = new FieldState();
-					fs.Store(o, env);
+					fs.Store(o, environment);
 					var diffUndo = v.State.GenerateDifference(fs);
 					var diffRedo = fs.GenerateDifference(v.State);
 
 					var instanceID = v.Target.InstanceID;
 					var asset = v.Asset;
-					var root = v.Container;
+					var container = v.Container;
 
 					var oldDifference = asset.GetDifference(instanceID);
 
-					Difference newDifference = null;
-
+					Difference newDifference;
 					if (oldDifference != null)
 					{
 						newDifference = Difference.MergeDifference(diffRedo, oldDifference);
@@ -503,7 +502,7 @@ namespace PartsTreeSystem
 					var command = new ValueChangeCommand();
 
 					command.Asset = asset;
-					command.Container = root;
+					command.Container = container;
 					command.InstanceID = instanceID;
 					command.DiffRedo = diffRedo;
 					command.DiffUndo = diffUndo;

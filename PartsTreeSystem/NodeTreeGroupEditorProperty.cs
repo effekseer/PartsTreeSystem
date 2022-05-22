@@ -13,11 +13,16 @@ namespace PartsTreeSystem
 			public int InstanceID;
 			public object Generator;
 
-			public bool IsValueEdited(string[] fields)
+			/// <summary>
+			/// Get whether the value of a field has changed from the default
+			/// </summary>
+			/// <param name="pathChains">e.g. prop.Base.Template -> new [] {prop, Base, Template}</param>
+			/// <returns></returns>
+			public bool IsValueEdited(IEnumerable<string> pathChains)
 			{
 				if (Base.Differences.TryGetValue(InstanceID, out var value))
 				{
-					var akg = new AccessKeyGroup { Keys = fields.Select(_ => new AccessKey { Name = _ }).ToArray() };
+					var akg = new AccessKeyGroup { Keys = pathChains.Select(_ => new AccessKey { Name = _ }).ToArray() };
 					return value.ContainTarget(akg);
 				}
 
@@ -28,11 +33,10 @@ namespace PartsTreeSystem
 		}
 
 		List<NodeProperty> nodeProperties = new List<NodeProperty>();
-
-		public IReadOnlyList<NodeProperty> Properties { get { return nodeProperties; } }
-
 		NodeTreeGroup nodeTreeGroup;
 		Environment environment;
+
+		public IReadOnlyList<NodeProperty> Properties { get { return nodeProperties; } }
 
 		public NodeTreeGroupEditorProperty(NodeTreeGroup nodeTreeGroup, Environment environment)
 		{
@@ -40,6 +44,7 @@ namespace PartsTreeSystem
 			this.environment = environment;
 			Rebuild();
 		}
+
 
 		public void Rebuild()
 		{

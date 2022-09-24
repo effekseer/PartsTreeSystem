@@ -182,6 +182,46 @@ namespace PartsTreeSystemExample
 								context.CommandManager.NotifyEditFields(selectedNode);
 							}
 						}
+						else if (value is Vector3)
+						{
+							var v = (Vector3)value;
+
+							var fields = v.GetType().GetFields();
+
+							var getterSetterNest = new FieldGetterSetter();
+							var getterSetterTree = getterSetters.Concat(new[] { getterSetterNest }).ToArray();
+							foreach (var field in fields)
+							{
+								getterSetterNest.Reset(v, field);
+								updateFields(context, selectedNode, getterSetterTree);
+
+								if (getterSetterNest.IsDirtied)
+								{
+									for (int i = getterSetterTree.Length - 1; i >= 1; i--)
+									{
+										getterSetterTree[i - 1].SetValue(getterSetterTree[i].Parent);
+										if (getterSetterTree[i - 1].IsParentClass)
+										{
+											break;
+										}
+									}
+								}
+							}
+						}
+						else if (value is Parameter)
+						{
+							var v = (Parameter)value;
+
+							var fields = v.GetType().GetFields();
+
+							var getterSetterNest = new FieldGetterSetter();
+
+							foreach (var field in fields)
+							{
+								getterSetterNest.Reset(v, field);
+								updateFields(context, selectedNode, getterSetters.Concat(new[] { getterSetterNest }).ToArray());
+							}
+						}
 						else if (value is IList)
 						{
 							var v = (IList)value;
@@ -193,12 +233,12 @@ namespace PartsTreeSystemExample
 								context.CommandManager.NotifyEditFields(selectedNode);
 							}
 
-							var listGetterSetter = new FieldGetterSetter();
+							var getterSetterNest = new FieldGetterSetter();
 
 							for (int i = 0; i < v.Count; i++)
 							{
-								listGetterSetter.Reset(v, i);
-								updateFields(context, selectedNode, getterSetters.Concat(new[] { listGetterSetter }).ToArray());
+								getterSetterNest.Reset(v, i);
+								updateFields(context, selectedNode, getterSetters.Concat(new[] { getterSetterNest }).ToArray());
 							}
 						}
 						else
@@ -449,6 +489,8 @@ namespace PartsTreeSystemExample
 			public string Name = "Node";
 			public int Value1;
 			public float Value2;
+			public Vector3 Value3;
+			public Parameter Param1 = new Parameter();
 			public List<int> List1 = new List<int>();
 		}
 	}
@@ -519,22 +561,41 @@ namespace PartsTreeSystemExample
 		}
 	}
 
+	public struct Vector3
+	{
+		public float X;
+		public float Y;
+		public float Z;
+	}
+
+	public class Parameter
+	{
+		public float Param1;
+		public float Param2;
+		public float Param3;
+	}
+
 	class FieldGetterSetter
 	{
-		object parent;
 		System.Reflection.FieldInfo fieldInfo;
 		int? index;
+		public bool IsDirtied { get; private set; } = false;
+
+		public bool IsParentClass { get => Parent.GetType().IsClass; }
+
+		public object Parent { get; private set; }
 
 		public void Reset(object o, System.Reflection.FieldInfo fieldInfo)
 		{
-			parent = o;
+			Parent = o;
 			this.fieldInfo = fieldInfo;
 			index = null;
+			IsDirtied = false;
 		}
 
 		public void Reset(object o, int index)
 		{
-			parent = o;
+			Parent = o;
 			fieldInfo = null;
 			this.index = index;
 		}
@@ -557,11 +618,11 @@ namespace PartsTreeSystemExample
 		{
 			if (fieldInfo != null)
 			{
-				return fieldInfo.GetValue(parent);
+				return fieldInfo.GetValue(Parent);
 			}
 			else if (index.HasValue)
 			{
-				return Helper.GetValueWithIndex(parent, index.Value);
+				return Helper.GetValueWithIndex(Parent, index.Value);
 			}
 
 			return null;
@@ -571,11 +632,13 @@ namespace PartsTreeSystemExample
 		{
 			if (fieldInfo != null)
 			{
-				fieldInfo.SetValue(parent, value);
+				fieldInfo.SetValue(Parent, value);
+				IsDirtied = true;
 			}
 			else if (index.HasValue)
 			{
-				Helper.SetValueToIndex(parent, value, index.Value);
+				Helper.SetValueToIndex(Parent, value, index.Value);
+				IsDirtied = true;
 			}
 		}
 	}

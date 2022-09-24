@@ -16,9 +16,9 @@ jobs:
       - name: CheckFormat
         run: |
          dotnet tool install -g dotnet-format
-         dotnet format --check --folder PartsTreeSystem/
-         dotnet format --check --folder PartsTreeSystemTest/
-         dotnet format --check --folder PartsTreeSystemExample/
+         dotnet format --verify-no-changes --folder PartsTreeSystem/
+         dotnet format --verify-no-changes --folder PartsTreeSystemTest/
+         dotnet format --verify-no-changes --folder PartsTreeSystemExample/
         shell: sh
 
       - name: Test

@@ -9,8 +9,7 @@ namespace PartsTreeSystemExample
 	{
 		[STAThread]
 		static void Main(string[] args)
-		{
-			var state = new EditorState();
+		{ var state = new EditorState();
 
 			state.Env = new Environment();
 			state.PartsList = new PartsList();

@@ -38,6 +38,25 @@ namespace PartsTreeSystemTest
 		public TestStruct1 Struct1;
 	}
 
+	class TestProperty
+	{
+		[SerializeField]
+		public float Value1 { get; set; }
+
+		public float Value2 { get; set; }
+	}
+
+	class TestPrivate
+	{
+		[SerializeField]
+		float value;
+
+		public void SetValue(float v)
+		{
+			value = v;
+		}
+	}
+
 	public class Diff
 	{
 		[SetUp]
@@ -140,6 +159,47 @@ namespace PartsTreeSystemTest
 
 			var diff2 = after.GenerateDifference(before);
 			Assert.AreEqual(2, diff2.Modifications.Count);
+		}
+
+		[Test]
+		public void DiffProperty()
+		{
+			var env = new Environment();
+			var v = new TestProperty();
+			v.Value1 = 3;
+			v.Value2 = 4;
+
+			var before = new FieldState();
+			before.Store(v, env);
+
+			v.Value1 = 6;
+			v.Value2 = 8;
+
+			var after = new FieldState();
+			after.Store(v, env);
+
+			var diff = before.GenerateDifference(after);
+			Assert.AreEqual(1, diff.Modifications.Count);
+			Assert.AreEqual(3.0f, diff.Modifications.First().Value);
+		}
+
+		[Test]
+		public void DiffPrivate()
+		{
+			var env = new Environment();
+			var v = new TestPrivate();
+			v.SetValue(2);
+
+			var before = new FieldState();
+			before.Store(v, env);
+			v.SetValue(4);
+
+			var after = new FieldState();
+			after.Store(v, env);
+
+			var diff = before.GenerateDifference(after);
+			Assert.AreEqual(1, diff.Modifications.Count);
+			Assert.AreEqual(2.0f, diff.Modifications.First().Value);
 		}
 	}
 }

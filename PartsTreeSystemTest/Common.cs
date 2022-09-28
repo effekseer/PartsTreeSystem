@@ -78,4 +78,21 @@ namespace PartsTreeSystemTest
 		public float C;
 	}
 
+	class TestNodeProprety : Node
+	{
+		[SerializeField]
+		public float Value1 { get; set; }
+
+		public float Value2 { get; set; }
+	}
+
+	class TestNodePrivate : Node
+	{
+		[SerializeField]
+		float value = 0.0f;
+
+		public float GetValue() { return value; }
+
+		public void SetValue(float value) { this.value = value; }
+	}
 }

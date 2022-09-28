@@ -137,5 +137,63 @@ namespace PartsTreeSystemTest
 			Assert.True(Helper.IsValueEqual(instanceRoot, instanceRoot.Refs[0]));
 			Assert.True(Helper.IsValueEqual(instance, instance2));
 		}
+
+		[Test]
+		public void SaveLoadProperty()
+		{
+			var env = new Environment();
+			var random = new System.Random();
+			var commandManager = new CommandManager();
+			var nodeTreeGroup = new NodeTreeGroup();
+			nodeTreeGroup.Init(typeof(TestNodeProprety), env);
+
+			var instance = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
+
+			commandManager.StartEditFields(nodeTreeGroup, instance, instance.Root, env);
+
+			(instance.Root as TestNodeProprety).Value1 = 1;
+			(instance.Root as TestNodeProprety).Value2 = 2;
+
+			commandManager.NotifyEditFields(instance.Root);
+			commandManager.EndEditFields(instance.Root, env);
+
+			var json = nodeTreeGroup.Serialize(env);
+
+			var nodeTreeGroup2 = NodeTreeGroup.Deserialize(json);
+			var instance2 = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup2, env);
+
+			var instanceRoot = instance2.Root as TestNodeProprety;
+
+			Assert.True(Helper.IsValueEqual(instanceRoot.Value1, (instance.Root as TestNodeProprety).Value1));
+			Assert.True(Helper.IsValueEqual(instanceRoot.Value2, 0.0f));
+		}
+
+		[Test]
+		public void SaveLoadPrivate()
+		{
+			var env = new Environment();
+			var random = new System.Random();
+			var commandManager = new CommandManager();
+			var nodeTreeGroup = new NodeTreeGroup();
+			nodeTreeGroup.Init(typeof(TestNodePrivate), env);
+
+			var instance = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
+
+			commandManager.StartEditFields(nodeTreeGroup, instance, instance.Root, env);
+
+			(instance.Root as TestNodePrivate).SetValue(1.0f);
+
+			commandManager.NotifyEditFields(instance.Root);
+			commandManager.EndEditFields(instance.Root, env);
+
+			var json = nodeTreeGroup.Serialize(env);
+
+			var nodeTreeGroup2 = NodeTreeGroup.Deserialize(json);
+			var instance2 = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup2, env);
+
+			var instanceRoot = instance2.Root as TestNodePrivate;
+
+			Assert.True(Helper.IsValueEqual(instanceRoot.GetValue(), 1.0f));
+		}
 	}
 }

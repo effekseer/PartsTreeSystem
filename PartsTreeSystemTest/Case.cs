@@ -47,7 +47,7 @@ namespace PartsTreeSystemTest
 		{
 			var env = new PartsTreeSystem.Environment();
 			var commandManager = new CommandManager();
-			var nodeTreeGroup = new NodeTreeGroup();
+			var nodeTreeGroup = new NodeTreeAsset();
 			nodeTreeGroup.Init(typeof(Node), env);
 
 			var instance = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
@@ -77,7 +77,7 @@ namespace PartsTreeSystemTest
 		{
 			var env = new PartsTreeSystem.Environment();
 			var commandManager = new CommandManager();
-			var nodeTreeGroup = new NodeTreeGroup();
+			var nodeTreeGroup = new NodeTreeAsset();
 			nodeTreeGroup.Init(typeof(Node), env);
 
 			var instance = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
@@ -141,7 +141,7 @@ namespace PartsTreeSystemTest
 		{
 			var env = new PartsTreeSystem.Environment();
 			var commandManager = new CommandManager();
-			var nodeTreeGroup = new NodeTreeGroup();
+			var nodeTreeGroup = new NodeTreeAsset();
 			nodeTreeGroup.Init(typeof(Node), env);
 
 			var instance = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
@@ -181,7 +181,7 @@ namespace PartsTreeSystemTest
 		{
 			var env = new PartsTreeSystem.Environment();
 			var commandManager = new CommandManager();
-			var nodeTreeGroup = new NodeTreeGroup();
+			var nodeTreeGroup = new NodeTreeAsset();
 			nodeTreeGroup.Init(typeof(TestNodePrimitive), env);
 
 			var instance = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
@@ -201,7 +201,7 @@ namespace PartsTreeSystemTest
 		{
 			var rand = new Random();
 			var env = new NodeChangeEnvironment();
-			var nodeTreeGroup = new NodeTreeGroup();
+			var nodeTreeGroup = new NodeTreeAsset();
 
 			env.ReturnType = typeof(NodeChange1);
 			nodeTreeGroup.Init(typeof(Node), env);
@@ -237,7 +237,7 @@ namespace PartsTreeSystemTest
 		{
 			var rand = new Random();
 			var env = new NodeChangeEnvironment();
-			var nodeTreeGroup = new NodeTreeGroup();
+			var nodeTreeGroup = new NodeTreeAsset();
 
 			env.ReturnType = typeof(NodeChange2);
 			nodeTreeGroup.Init(typeof(Node), env);
@@ -271,8 +271,8 @@ namespace PartsTreeSystemTest
 		public void MultiNodeTree()
 		{
 			var env = new MultiNodeTreeEnvironment();
-			var nodeTreeGroup1 = new NodeTreeGroup();
-			var nodeTreeGroup2 = new NodeTreeGroup();
+			var nodeTreeGroup1 = new NodeTreeAsset();
+			var nodeTreeGroup2 = new NodeTreeAsset();
 
 			env.NodeTrees.Add("C:/test/Tree1", nodeTreeGroup1);
 			env.NodeTrees.Add("C:/test/Tree2", nodeTreeGroup2);

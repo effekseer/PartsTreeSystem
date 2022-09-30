@@ -225,7 +225,7 @@ namespace PartsTreeSystem
 			SetFlagToBlockMergeCommands();
 		}
 
-		void AddNodeInternal(NodeTreeGroup nodeTreeGroup, NodeTree nodeTree, int parentID, Environment env, string before, int newNodeID, string after, string commandName)
+		void AddNodeInternal(NodeTreeAsset nodeTreeGroup, NodeTree nodeTree, int parentID, Environment env, string before, int newNodeID, string after, string commandName)
 		{
 			Action execute = () =>
 			{
@@ -240,7 +240,7 @@ namespace PartsTreeSystem
 			var command = new DelegateCommand();
 			command.OnExecute = () =>
 			{
-				nodeTreeGroup.InternalData = NodeTreeGroupInternalData.Deserialize(after);
+				nodeTreeGroup.InternalData = NodeTreeAssetInternalData.Deserialize(after);
 				execute();
 			};
 
@@ -252,7 +252,7 @@ namespace PartsTreeSystem
 					parent.RemoveChild(newNodeID);
 				}
 
-				nodeTreeGroup.InternalData = NodeTreeGroupInternalData.Deserialize(before);
+				nodeTreeGroup.InternalData = NodeTreeAssetInternalData.Deserialize(before);
 			};
 
 			command.Name = commandName;
@@ -270,7 +270,7 @@ namespace PartsTreeSystem
 		/// <param name="addingNodeTreeGroup"></param>
 		/// <param name="env"></param>
 		/// <returns>InstanceID of added node</returns>
-		public int AddNode(NodeTreeGroup nodeTreeGroup, NodeTree nodeTree, int parentID, NodeTreeGroup addingNodeTreeGroup, Environment env)
+		public int AddNode(NodeTreeAsset nodeTreeGroup, NodeTree nodeTree, int parentID, NodeTreeAsset addingNodeTreeGroup, Environment env)
 		{
 			var before = nodeTreeGroup.InternalData.Serialize();
 			var newNodeID = nodeTreeGroup.AddNodeTreeGroup(parentID, addingNodeTreeGroup, env);
@@ -288,7 +288,7 @@ namespace PartsTreeSystem
 		/// <param name="type"></param>
 		/// <param name="env"></param>
 		/// <returns>InstanceID of added node</returns>
-		public int AddNode(NodeTreeGroup nodeTreeGroup, NodeTree nodeTree, int parentID, Type type, Environment env)
+		public int AddNode(NodeTreeAsset nodeTreeGroup, NodeTree nodeTree, int parentID, Type type, Environment env)
 		{
 			var before = nodeTreeGroup.InternalData.Serialize();
 			var newNodeID = nodeTreeGroup.AddNode(parentID, type, env);
@@ -297,7 +297,7 @@ namespace PartsTreeSystem
 			return newNodeID;
 		}
 
-		public void RemoveNode(NodeTreeGroup nodeTreeGroup, NodeTree nodeTree, int nodeID, Environment env)
+		public void RemoveNode(NodeTreeAsset nodeTreeGroup, NodeTree nodeTree, int nodeID, Environment env)
 		{
 			var parentNode = nodeTree.FindParent(nodeID);
 			var parentNodeID = parentNode.InstanceID;
@@ -322,12 +322,12 @@ namespace PartsTreeSystem
 			command.OnExecute = () =>
 			{
 				execute();
-				nodeTreeGroup.InternalData = NodeTreeGroupInternalData.Deserialize(after);
+				nodeTreeGroup.InternalData = NodeTreeAssetInternalData.Deserialize(after);
 			};
 
 			command.OnUnexecute = () =>
 			{
-				nodeTreeGroup.InternalData = NodeTreeGroupInternalData.Deserialize(before);
+				nodeTreeGroup.InternalData = NodeTreeAssetInternalData.Deserialize(before);
 
 				var pn = nodeTree.FindInstance(parentNodeID) as INode;
 				var newNodeTree = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
@@ -341,7 +341,7 @@ namespace PartsTreeSystem
 			AddCommand(command);
 		}
 
-		public void MoveNode(NodeTreeGroup nodeTreeGroup, NodeTree nodeTree, int nodeID, int insertedParentNodeID, int index, Environment env)
+		public void MoveNode(NodeTreeAsset nodeTreeGroup, NodeTree nodeTree, int nodeID, int insertedParentNodeID, int index, Environment env)
 		{
 			if (!nodeTreeGroup.CanRemoveNode(nodeID, env))
 			{
@@ -430,7 +430,7 @@ namespace PartsTreeSystem
 			var command = new DelegateCommand();
 			command.OnExecute = () =>
 			{
-				nodeTreeGroup.InternalData = NodeTreeGroupInternalData.Deserialize(after);
+				nodeTreeGroup.InternalData = NodeTreeAssetInternalData.Deserialize(after);
 				execute();
 			};
 
@@ -445,7 +445,7 @@ namespace PartsTreeSystem
 					previousNodeParent.InsertChild(originalIndex, node);
 				}
 
-				nodeTreeGroup.InternalData = NodeTreeGroupInternalData.Deserialize(before);
+				nodeTreeGroup.InternalData = NodeTreeAssetInternalData.Deserialize(before);
 			};
 
 			command.Name = "MoveNode";

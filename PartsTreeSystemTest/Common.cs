@@ -36,7 +36,7 @@ namespace PartsTreeSystemTest
 
 	class MultiNodeTreeEnvironment : PartsTreeSystem.Environment
 	{
-		public Dictionary<string, NodeTreeGroup> NodeTrees = new Dictionary<string, NodeTreeGroup>();
+		public Dictionary<string, NodeTreeAsset> NodeTrees = new Dictionary<string, NodeTreeAsset>();
 
 		public override Asset GetAsset(string path)
 		{

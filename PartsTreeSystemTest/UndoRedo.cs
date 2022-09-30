@@ -18,7 +18,7 @@ namespace PartsTreeSystemTest
 		{
 			var env = new PartsTreeSystem.Environment();
 			var commandManager = new CommandManager();
-			var nodeTreeGroup = new NodeTreeGroup();
+			var nodeTreeGroup = new NodeTreeAsset();
 			nodeTreeGroup.Init(typeof(Node), env);
 			var instance = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
 
@@ -62,7 +62,7 @@ namespace PartsTreeSystemTest
 			var env = new PartsTreeSystem.Environment();
 			var random = new System.Random();
 			var commandManager = new CommandManager();
-			var nodeTreeGroup = new NodeTreeGroup();
+			var nodeTreeGroup = new NodeTreeAsset();
 			nodeTreeGroup.Init(typeof(T), env);
 			var instance = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
 
@@ -160,8 +160,8 @@ namespace PartsTreeSystemTest
 			var env = new MultiNodeTreeEnvironment();
 			var random = new System.Random();
 
-			var nodeTreeGroupChild = new NodeTreeGroup();
-			var nodeTreeGroup = new NodeTreeGroup();
+			var nodeTreeGroupChild = new NodeTreeAsset();
+			var nodeTreeGroup = new NodeTreeAsset();
 
 			env.NodeTrees.Add("C:/test/Tree1", nodeTreeGroupChild);
 			env.NodeTrees.Add("C:/test/Tree2", nodeTreeGroup);

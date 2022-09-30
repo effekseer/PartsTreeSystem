@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace PartsTreeSystem
 {
-	public class NodeTreeGroupEditorProperty
+	public class NodeTreeAssetEditorProperty
 	{
 		public class NodeProperty
 		{
@@ -33,14 +33,14 @@ namespace PartsTreeSystem
 		}
 
 		List<NodeProperty> nodeProperties = new List<NodeProperty>();
-		NodeTreeGroup nodeTreeGroup;
+		NodeTreeAsset nodeTreeAsset;
 		Environment environment;
 
 		public IReadOnlyList<NodeProperty> Properties { get { return nodeProperties; } }
 
-		public NodeTreeGroupEditorProperty(NodeTreeGroup nodeTreeGroup, Environment environment)
+		public NodeTreeAssetEditorProperty(NodeTreeAsset nodeTreeAsset, Environment environment)
 		{
-			this.nodeTreeGroup = nodeTreeGroup;
+			this.nodeTreeAsset = nodeTreeAsset;
 			this.environment = environment;
 			Rebuild();
 		}
@@ -50,7 +50,7 @@ namespace PartsTreeSystem
 		{
 			nodeProperties.Clear();
 
-			foreach (var nodeBase in nodeTreeGroup.InternalData.Bases)
+			foreach (var nodeBase in nodeTreeAsset.InternalData.Bases)
 			{
 				object generator = null;
 
@@ -60,7 +60,7 @@ namespace PartsTreeSystem
 				}
 				else if (!string.IsNullOrEmpty(nodeBase.Template))
 				{
-					var path = Utility.GetAbsolutePath(environment.GetAssetPath(nodeTreeGroup), nodeBase.Template);
+					var path = Utility.GetAbsolutePath(environment.GetAssetPath(nodeTreeAsset), nodeBase.Template);
 					generator = environment.GetAsset(path);
 				}
 

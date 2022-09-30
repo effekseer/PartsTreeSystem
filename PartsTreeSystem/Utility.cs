@@ -6,7 +6,7 @@ namespace PartsTreeSystem
 {
 	public class Utility
 	{
-		internal static INode CreateNode(NodeTreeGroup nodeTreeGroup, NodeTreeBase nodeTreeBase, Environment env)
+		internal static INode CreateNode(NodeTreeAsset nodeTreeAsset, NodeTreeBase nodeTreeBase, Environment env)
 		{
 			INode node = null;
 
@@ -19,10 +19,10 @@ namespace PartsTreeSystem
 			}
 			else if (nodeTreeBase.Template != null)
 			{
-				var path = GetAbsolutePath(env.GetAssetPath(nodeTreeGroup), nodeTreeBase.Template);
-				var baseNodeTreeGroup = env.GetAsset(path) as NodeTreeGroup;
+				var path = GetAbsolutePath(env.GetAssetPath(nodeTreeAsset), nodeTreeBase.Template);
+				var baseNodeTreeAsset = env.GetAsset(path) as NodeTreeAsset;
 
-				var nodeTree = CreateNodeFromNodeTreeGroup(baseNodeTreeGroup, env);
+				var nodeTree = CreateNodeFromNodeTreeGroup(baseNodeTreeAsset, env);
 				node = nodeTree.Root;
 			}
 			else
@@ -38,7 +38,7 @@ namespace PartsTreeSystem
 			public List<int> UnusedIDs = new List<int>();
 		}
 
-		internal static RemapResult RemapID(Dictionary<int, int> idRemapper, NodeTreeGroup nodeTreeGroup, INode node, Dictionary<int, INode> idToNode)
+		internal static RemapResult RemapID(Dictionary<int, int> idRemapper, NodeTreeAsset nodeTreeGroup, INode node, Dictionary<int, INode> idToNode)
 		{
 			var result = new RemapResult();
 
@@ -115,13 +115,13 @@ namespace PartsTreeSystem
 			return input.Replace("\\", "/");
 		}
 
-		public static void RebuildNodeTree(NodeTreeGroup nodeTreeGroup, NodeTree nodeTree, Environment env)
+		public static void RebuildNodeTree(NodeTreeAsset nodeTreeGroup, NodeTree nodeTree, Environment env)
 		{
 			var nt = CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
 			nodeTree.Root = nt.Root;
 		}
 
-		public static NodeTree CreateNodeFromNodeTreeGroup(NodeTreeGroup nodeTreeGroup, Environment env)
+		public static NodeTree CreateNodeFromNodeTreeGroup(NodeTreeAsset nodeTreeGroup, Environment env)
 		{
 			var idToNode = new Dictionary<int, INode>();
 

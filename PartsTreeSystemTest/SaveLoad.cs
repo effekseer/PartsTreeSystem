@@ -42,7 +42,7 @@ namespace PartsTreeSystemTest
 			var env = new Environment();
 			var random = new System.Random();
 			var commandManager = new CommandManager();
-			var nodeTreeGroup = new NodeTreeGroup();
+			var nodeTreeGroup = new NodeTreeAsset();
 			nodeTreeGroup.Init(typeof(T), env);
 
 			var instance = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
@@ -55,7 +55,7 @@ namespace PartsTreeSystemTest
 			commandManager.EndEditFields(instance.Root, env);
 
 			var json = nodeTreeGroup.Serialize(env);
-			var nodeTreeGroup2 = NodeTreeGroup.Deserialize(json);
+			var nodeTreeGroup2 = NodeTreeAsset.Deserialize(json);
 			var instance2 = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup2, env);
 
 			Assert.True(Helper.IsValueEqual(instance, instance2));
@@ -67,7 +67,7 @@ namespace PartsTreeSystemTest
 			var env = new Environment();
 			var random = new System.Random();
 			var commandManager = new CommandManager();
-			var nodeTreeGroup = new NodeTreeGroup();
+			var nodeTreeGroup = new NodeTreeAsset();
 			nodeTreeGroup.Init(typeof(TestNodeRef), env);
 
 			var instance = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
@@ -83,7 +83,7 @@ namespace PartsTreeSystemTest
 
 			var json = nodeTreeGroup.Serialize(env);
 
-			var nodeTreeGroup2 = NodeTreeGroup.Deserialize(json);
+			var nodeTreeGroup2 = NodeTreeAsset.Deserialize(json);
 			var instance2 = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup2, env);
 
 			var instanceRoot = instance2.Root as TestNodeRef;
@@ -99,8 +99,8 @@ namespace PartsTreeSystemTest
 			var env = new MultiNodeTreeEnvironment();
 			var random = new System.Random();
 			var commandManager = new CommandManager();
-			var nodeTreeGroup1 = new NodeTreeGroup();
-			var nodeTreeGroup2 = new NodeTreeGroup();
+			var nodeTreeGroup1 = new NodeTreeAsset();
+			var nodeTreeGroup2 = new NodeTreeAsset();
 
 			env.NodeTrees.Add("C:/test/Tree1", nodeTreeGroup1);
 			env.NodeTrees.Add("C:/test/Tree2", nodeTreeGroup2);
@@ -125,7 +125,7 @@ namespace PartsTreeSystemTest
 
 			var json = nodeTreeGroup1.Serialize(env);
 
-			var nodeTreeGroup_Deserialized = NodeTreeGroup.Deserialize(json);
+			var nodeTreeGroup_Deserialized = NodeTreeAsset.Deserialize(json);
 
 			// TODO : Better implimentation
 			env.NodeTrees["C:/test/Tree1"] = nodeTreeGroup_Deserialized;
@@ -144,7 +144,7 @@ namespace PartsTreeSystemTest
 			var env = new Environment();
 			var random = new System.Random();
 			var commandManager = new CommandManager();
-			var nodeTreeGroup = new NodeTreeGroup();
+			var nodeTreeGroup = new NodeTreeAsset();
 			nodeTreeGroup.Init(typeof(TestNodeProprety), env);
 
 			var instance = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
@@ -159,7 +159,7 @@ namespace PartsTreeSystemTest
 
 			var json = nodeTreeGroup.Serialize(env);
 
-			var nodeTreeGroup2 = NodeTreeGroup.Deserialize(json);
+			var nodeTreeGroup2 = NodeTreeAsset.Deserialize(json);
 			var instance2 = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup2, env);
 
 			var instanceRoot = instance2.Root as TestNodeProprety;
@@ -174,7 +174,7 @@ namespace PartsTreeSystemTest
 			var env = new Environment();
 			var random = new System.Random();
 			var commandManager = new CommandManager();
-			var nodeTreeGroup = new NodeTreeGroup();
+			var nodeTreeGroup = new NodeTreeAsset();
 			nodeTreeGroup.Init(typeof(TestNodePrivate), env);
 
 			var instance = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
@@ -188,7 +188,7 @@ namespace PartsTreeSystemTest
 
 			var json = nodeTreeGroup.Serialize(env);
 
-			var nodeTreeGroup2 = NodeTreeGroup.Deserialize(json);
+			var nodeTreeGroup2 = NodeTreeAsset.Deserialize(json);
 			var instance2 = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup2, env);
 
 			var instanceRoot = instance2.Root as TestNodePrivate;

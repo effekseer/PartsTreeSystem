@@ -9,14 +9,14 @@ namespace PartsTreeSystem
 	{
 		public List<NodeTreeBase> Bases = new List<NodeTreeBase>();
 
-		public string Serialize()
+		public string Serialize(Environment env)
 		{
-			return JsonSerializer.Serialize(this);
+			return JsonSerializer.Serialize(this, env);
 		}
 
-		public static NodeTreeAssetInternalData Deserialize(string json)
+		public static NodeTreeAssetInternalData Deserialize(string json, Environment env)
 		{
-			return JsonSerializer.Deserialize<NodeTreeAssetInternalData>(json);
+			return JsonSerializer.Deserialize<NodeTreeAssetInternalData>(json, env);
 		}
 	}
 
@@ -100,7 +100,7 @@ namespace PartsTreeSystem
 
 			var nodeTreeBase = new NodeTreeBase();
 
-			nodeTreeBase.Template = Utility.GetRelativePath(env.GetAssetPath(this), env.GetAssetPath(nodeTreeGroup));
+			nodeTreeBase.Template = env.GetRelativePath(env.GetAssetPath(this), env.GetAssetPath(nodeTreeGroup));
 
 			AssignID(nodeTreeBase.IDRemapper, node.Root);
 
@@ -220,19 +220,19 @@ namespace PartsTreeSystem
 
 		public string Serialize(Environment env)
 		{
-			var json = InternalData.Serialize();
-			var internalData = NodeTreeAssetInternalData.Deserialize(json);
+			var json = InternalData.Serialize(env);
+			var internalData = NodeTreeAssetInternalData.Deserialize(json, env);
 
 			RemoveUnusedVariables(internalData, env);
 
-			return internalData.Serialize();
+			return internalData.Serialize(env);
 		}
 
-		public static NodeTreeAsset Deserialize(string json)
+		public static NodeTreeAsset Deserialize(string json, Environment env)
 		{
 			var prefab = new NodeTreeAsset();
 
-			prefab.InternalData = NodeTreeAssetInternalData.Deserialize(json);
+			prefab.InternalData = NodeTreeAssetInternalData.Deserialize(json, env);
 
 			return prefab;
 		}

@@ -25,6 +25,16 @@ namespace PartsTreeSystem
 		{
 			return null;
 		}
+
+		public virtual string GetRelativePath(string basePath, string path)
+		{
+			return Utility.GetRelativePath(basePath, path);
+		}
+
+		public virtual string GetAbsolutePath(string basePath, string path)
+		{
+			return Utility.GetAbsolutePath(basePath, path);
+		}
 	}
 
 }

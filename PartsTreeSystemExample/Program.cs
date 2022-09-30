@@ -462,7 +462,7 @@ namespace PartsTreeSystemExample
 			public void Load(string path, EditorState state)
 			{
 				var text = System.IO.File.ReadAllText(path);
-				NodeTreeGroup = PartsTreeSystem.NodeTreeAsset.Deserialize(text);
+				NodeTreeGroup = PartsTreeSystem.NodeTreeAsset.Deserialize(text, state.Env);
 				EditorProperty = new PartsTreeSystem.NodeTreeAssetEditorProperty(NodeTreeGroup, state.Env);
 				NodeTree = PartsTreeSystem.Utility.CreateNodeFromNodeTreeGroup(NodeTreeGroup, state.Env);
 				CommandManager = new PartsTreeSystem.CommandManager();
@@ -533,7 +533,7 @@ namespace PartsTreeSystemExample
 				return pathes.Where(_ => _.Value == path).FirstOrDefault().Key;
 			}
 			var text = System.IO.File.ReadAllText(path);
-			var nodeTreeGroup = PartsTreeSystem.NodeTreeAsset.Deserialize(text);
+			var nodeTreeGroup = PartsTreeSystem.NodeTreeAsset.Deserialize(text, this);
 
 			pathes.Add(nodeTreeGroup, path);
 			return nodeTreeGroup;

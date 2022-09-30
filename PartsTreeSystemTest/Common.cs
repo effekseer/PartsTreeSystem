@@ -95,4 +95,54 @@ namespace PartsTreeSystemTest
 
 		public void SetValue(float value) { this.value = value; }
 	}
+
+	class CustomAsset : Asset
+	{
+		public CustomAsset AssetRef;
+	}
+
+	class TestNodeCustomAsset : Node
+	{
+		public CustomAsset AssetRef;
+	}
+	class CustomAssetEnvironment : PartsTreeSystem.Environment
+	{
+		public Dictionary<string, NodeTreeAsset> NodeTrees = new Dictionary<string, NodeTreeAsset>();
+
+		public Dictionary<string, CustomAsset> CustomAssets = new Dictionary<string, CustomAsset>();
+
+		public override Asset GetAsset(string path)
+		{
+			var key = Utility.BackSlashToSlash(path);
+			if (NodeTrees.ContainsKey(key))
+			{
+				return NodeTrees[key];
+			}
+
+			if (CustomAssets.ContainsKey(key))
+			{
+				return CustomAssets[key];
+			}
+
+			return null;
+		}
+
+		public override string GetAssetPath(Asset asset)
+		{
+			var nodeTree = NodeTrees.FirstOrDefault(_ => _.Value == asset);
+			var customAsset = CustomAssets.FirstOrDefault(_ => _.Value == asset);
+
+			if (nodeTree.Key != null)
+			{
+				return nodeTree.Key;
+			}
+
+			if (customAsset.Key != null)
+			{
+				return customAsset.Key;
+			}
+
+			return string.Empty;
+		}
+	}
 }

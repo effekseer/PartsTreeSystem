@@ -55,7 +55,7 @@ namespace PartsTreeSystemTest
 			commandManager.EndEditFields(instance.Root, env);
 
 			var json = nodeTreeGroup.Serialize(env);
-			var nodeTreeGroup2 = NodeTreeAsset.Deserialize(json);
+			var nodeTreeGroup2 = NodeTreeAsset.Deserialize(json, env);
 			var instance2 = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup2, env);
 
 			Assert.True(Helper.IsValueEqual(instance, instance2));
@@ -83,7 +83,7 @@ namespace PartsTreeSystemTest
 
 			var json = nodeTreeGroup.Serialize(env);
 
-			var nodeTreeGroup2 = NodeTreeAsset.Deserialize(json);
+			var nodeTreeGroup2 = NodeTreeAsset.Deserialize(json, env);
 			var instance2 = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup2, env);
 
 			var instanceRoot = instance2.Root as TestNodeRef;
@@ -125,7 +125,7 @@ namespace PartsTreeSystemTest
 
 			var json = nodeTreeGroup1.Serialize(env);
 
-			var nodeTreeGroup_Deserialized = NodeTreeAsset.Deserialize(json);
+			var nodeTreeGroup_Deserialized = NodeTreeAsset.Deserialize(json, env);
 
 			// TODO : Better implimentation
 			env.NodeTrees["C:/test/Tree1"] = nodeTreeGroup_Deserialized;
@@ -159,7 +159,7 @@ namespace PartsTreeSystemTest
 
 			var json = nodeTreeGroup.Serialize(env);
 
-			var nodeTreeGroup2 = NodeTreeAsset.Deserialize(json);
+			var nodeTreeGroup2 = NodeTreeAsset.Deserialize(json, env);
 			var instance2 = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup2, env);
 
 			var instanceRoot = instance2.Root as TestNodeProprety;
@@ -188,12 +188,57 @@ namespace PartsTreeSystemTest
 
 			var json = nodeTreeGroup.Serialize(env);
 
-			var nodeTreeGroup2 = NodeTreeAsset.Deserialize(json);
+			var nodeTreeGroup2 = NodeTreeAsset.Deserialize(json, env);
 			var instance2 = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup2, env);
 
 			var instanceRoot = instance2.Root as TestNodePrivate;
 
 			Assert.True(Helper.IsValueEqual(instanceRoot.GetValue(), 1.0f));
+		}
+
+		[Test]
+		public void SaveLoadCustomAsset()
+		{
+			var env = new CustomAssetEnvironment();
+
+			var ca1 = new CustomAsset();
+			var ca2 = new CustomAsset();
+			ca2.AssetRef = ca1;
+
+			env.CustomAssets.Add("CA1", ca1);
+			env.CustomAssets.Add("CA2", ca2);
+
+
+			var random = new System.Random();
+			var commandManager = new CommandManager();
+			var nodeTreeAsset = new NodeTreeAsset();
+			nodeTreeAsset.Init(typeof(TestNodeCustomAsset), env);
+			env.NodeTrees.Add("Tree1", nodeTreeAsset);
+
+			var instance = Utility.CreateNodeFromNodeTreeGroup(nodeTreeAsset, env);
+
+			commandManager.StartEditFields(nodeTreeAsset, instance, instance.Root, env);
+
+			(instance.Root as TestNodeCustomAsset).AssetRef = ca2;
+
+			commandManager.NotifyEditFields(instance.Root);
+			commandManager.EndEditFields(instance.Root, env);
+
+			var json = nodeTreeAsset.Serialize(env);
+
+			var nodeTreeGroup2 = NodeTreeAsset.Deserialize(json, env);
+			var instance2 = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup2, env);
+
+			var instanceRoot = instance2.Root as TestNodeCustomAsset;
+
+			Assert.True(Helper.IsValueEqual(instanceRoot.AssetRef, ca2));
+
+			{
+				var json_ca2 = JsonSerializer.Serialize(ca2, env);
+				var cs2_des = JsonSerializer.Deserialize<CustomAsset>(json_ca2, env);
+
+				Assert.True(Helper.IsValueEqual(cs2_des.AssetRef, ca1));
+			}
 		}
 	}
 }

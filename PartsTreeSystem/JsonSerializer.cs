@@ -9,18 +9,18 @@ using Newtonsoft.Json.Linq;
 
 namespace PartsTreeSystem
 {
-	class JsonSerializer
+	public class JsonSerializer
 	{
-		public static string Serialize(object o)
+		public static string Serialize(object self, Environment env)
 		{
-			return JsonConvert.SerializeObject(ConvertCSToJson(o));
+			return JsonConvert.SerializeObject(ConvertCSToJson(self, true, env));
 		}
 
-		public static T Deserialize<T>(string json)
+		public static T Deserialize<T>(string json, Environment env)
 		{
 			var token = JsonConvert.DeserializeObject(json);
 
-			return (T)ConvertJsonToCS(typeof(T), token as JToken);
+			return (T)ConvertJsonToCS(typeof(T), token as JToken, env);
 		}
 
 		static Type RemoveNullable(Type type)
@@ -32,56 +32,61 @@ namespace PartsTreeSystem
 			return type;
 		}
 
-		static JToken ConvertCSToJson(object value)
+		static JToken ConvertCSToJson(object self, bool isRoot, Environment env)
 		{
-			if (value is null)
+			if (self is null)
 			{
 				return null;
 			}
-			else if (value is string)
+			else if (self is Asset && !isRoot)
 			{
-				return (string)value;
+				var path = env.GetAssetPath(self as Asset);
+				return path;
 			}
-			else if (value.GetType().IsPrimitive)
+			else if (self is string)
 			{
-				return JToken.FromObject(value);
+				return (string)self;
 			}
-			else if (value.GetType().IsArray)
+			else if (self.GetType().IsPrimitive)
+			{
+				return JToken.FromObject(self);
+			}
+			else if (self.GetType().IsArray)
 			{
 				var a = new JArray();
 
-				var v = (Array)value;
+				var v = (Array)self;
 
 				for (int i = 0; i < v.Length; i++)
 				{
-					a.Add(ConvertCSToJson(v.GetValue(i)));
+					a.Add(ConvertCSToJson(v.GetValue(i), false, env));
 				}
 
 				return a;
 			}
-			else if (value is IList)
+			else if (self is IList)
 			{
 				var a = new JArray();
 
-				var v = (IList)value;
+				var v = (IList)self;
 
 				for (int i = 0; i < v.Count; i++)
 				{
-					a.Add(ConvertCSToJson(v[i]));
+					a.Add(ConvertCSToJson(v[i], false, env));
 				}
 
 				return a;
 			}
-			else if (value is IDictionary)
+			else if (self is IDictionary)
 			{
-				var v = (IDictionary)value;
+				var v = (IDictionary)self;
 				var o = new JArray();
 
 				foreach (var key in v.Keys)
 				{
 					var elm = new JArray();
-					elm.Add(ConvertCSToJson(key));
-					elm.Add(ConvertCSToJson(v[key]));
+					elm.Add(ConvertCSToJson(key, false, env));
+					elm.Add(ConvertCSToJson(v[key], false, env));
 					o.Add(elm);
 				}
 
@@ -91,30 +96,30 @@ namespace PartsTreeSystem
 			{
 				var o = new JObject();
 
-				var fields = value.GetType().GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+				var fields = self.GetType().GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
 
 				foreach (var field in fields)
 				{
-					var fv = field.GetValue(value);
+					var fv = field.GetValue(self);
 
-					o.Add(field.Name, ConvertCSToJson(fv));
+					o.Add(field.Name, ConvertCSToJson(fv, false, env));
 				}
 
-				var properties = value.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+				var properties = self.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
 				foreach (var property in properties)
 				{
-					var pv = property.GetValue(value);
+					var pv = property.GetValue(self);
 
-					o.Add(property.Name, ConvertCSToJson(pv));
+					o.Add(property.Name, ConvertCSToJson(pv, false, env));
 				}
 
 				return o;
 			}
 		}
 
-		static object ConvertJsonToCS(Type type, JToken token)
+		static object ConvertJsonToCS(Type type, JToken token, Environment env)
 		{
 			type = RemoveNullable(type);
 
@@ -132,7 +137,7 @@ namespace PartsTreeSystem
 							continue;
 						}
 
-						field.SetValue(dst, ConvertJsonToCS(field.FieldType, jobj[field.Name]));
+						field.SetValue(dst, ConvertJsonToCS(field.FieldType, jobj[field.Name], env));
 					}
 
 				}
@@ -147,7 +152,7 @@ namespace PartsTreeSystem
 							continue;
 						}
 
-						property.SetValue(dst, ConvertJsonToCS(property.PropertyType, jobj[property.Name]));
+						property.SetValue(dst, ConvertJsonToCS(property.PropertyType, jobj[property.Name], env));
 					}
 				}
 				return dst;
@@ -161,7 +166,7 @@ namespace PartsTreeSystem
 					var dst = Array.CreateInstance(type.GetElementType(), count);
 					for (int i = 0; i < jarray.Count; i++)
 					{
-						dst.SetValue(ConvertJsonToCS(type.GetElementType(), jarray[i]), i);
+						dst.SetValue(ConvertJsonToCS(type.GetElementType(), jarray[i], env), i);
 					}
 					return dst;
 				}
@@ -175,8 +180,8 @@ namespace PartsTreeSystem
 					for (int i = 0; i < jarray.Count; i++)
 					{
 						var jkv = jarray[i] as JArray;
-						var key = ConvertJsonToCS(keyType, jkv[0]);
-						var value = ConvertJsonToCS(valueType, jkv[1]);
+						var key = ConvertJsonToCS(keyType, jkv[0], env);
+						var value = ConvertJsonToCS(valueType, jkv[1], env);
 						dst.Add(key, value);
 					}
 
@@ -187,7 +192,7 @@ namespace PartsTreeSystem
 					var dst = Activator.CreateInstance(type) as IList;
 					for (int i = 0; i < jarray.Count; i++)
 					{
-						dst.Add(ConvertJsonToCS(dst.GetType().GenericTypeArguments[0], jarray[i]));
+						dst.Add(ConvertJsonToCS(dst.GetType().GenericTypeArguments[0], jarray[i], env));
 					}
 					return dst;
 				}
@@ -218,7 +223,15 @@ namespace PartsTreeSystem
 				}
 				else if (jvalue.Type == JTokenType.String)
 				{
-					return jvalue.Value<string>();
+					if (type.IsSubclassOf(typeof(Asset)))
+					{
+						var path = jvalue.Value<string>();
+						return env.GetAsset(path);
+					}
+					else
+					{
+						return jvalue.Value<string>();
+					}
 				}
 				else if (jvalue.Type == JTokenType.Boolean)
 				{

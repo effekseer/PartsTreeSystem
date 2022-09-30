@@ -60,7 +60,7 @@ namespace PartsTreeSystem
 				}
 				else if (!string.IsNullOrEmpty(nodeBase.Template))
 				{
-					var path = Utility.GetAbsolutePath(environment.GetAssetPath(nodeTreeAsset), nodeBase.Template);
+					var path = environment.GetAbsolutePath(environment.GetAssetPath(nodeTreeAsset), nodeBase.Template);
 					generator = environment.GetAsset(path);
 				}
 

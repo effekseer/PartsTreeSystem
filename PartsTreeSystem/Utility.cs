@@ -19,7 +19,7 @@ namespace PartsTreeSystem
 			}
 			else if (nodeTreeBase.Template != null)
 			{
-				var path = GetAbsolutePath(env.GetAssetPath(nodeTreeAsset), nodeTreeBase.Template);
+				var path = env.GetAbsolutePath(env.GetAssetPath(nodeTreeAsset), nodeTreeBase.Template);
 				var baseNodeTreeAsset = env.GetAsset(path) as NodeTreeAsset;
 
 				var nodeTree = CreateNodeFromNodeTreeGroup(baseNodeTreeAsset, env);

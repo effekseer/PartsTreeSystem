@@ -318,14 +318,14 @@ namespace PartsTreeSystemExample
 								{
 									if (Altseed2.Engine.Tool.MenuItem(p, "", false, true))
 									{
-										var addingNodeTreeGroup = env.GetAsset(p) as PartsTreeSystem.NodeTreeGroup;
+										var addingNodeTreeAsset = env.GetAsset(p) as PartsTreeSystem.NodeTreeAsset;
 
-										if (addingNodeTreeGroup != null)
+										if (addingNodeTreeAsset != null)
 										{
 											var instanceID = popupedNode.InstanceID;
 											delayEvents.Add(() =>
 											{
-												commandManager.AddNode(nodeTreeGroup, nodeTree, instanceID, addingNodeTreeGroup, env);
+												commandManager.AddNode(nodeTreeGroup, nodeTree, instanceID, addingNodeTreeAsset, env);
 												nodeTreeGroupEditorProperty.Rebuild();
 											});
 										}
@@ -445,16 +445,16 @@ namespace PartsTreeSystemExample
 
 		public class NodeTreeGroupContext
 		{
-			public PartsTreeSystem.NodeTreeGroup NodeTreeGroup;
+			public PartsTreeSystem.NodeTreeAsset NodeTreeGroup;
 			public PartsTreeSystem.NodeTree NodeTree;
-			public PartsTreeSystem.NodeTreeGroupEditorProperty EditorProperty;
+			public PartsTreeSystem.NodeTreeAssetEditorProperty EditorProperty;
 			public PartsTreeSystem.CommandManager CommandManager;
 
 			public void New(Type type, EditorState state)
 			{
-				NodeTreeGroup = new PartsTreeSystem.NodeTreeGroup();
+				NodeTreeGroup = new PartsTreeSystem.NodeTreeAsset();
 				NodeTreeGroup.Init(type, state.Env);
-				EditorProperty = new PartsTreeSystem.NodeTreeGroupEditorProperty(NodeTreeGroup, state.Env);
+				EditorProperty = new PartsTreeSystem.NodeTreeAssetEditorProperty(NodeTreeGroup, state.Env);
 				NodeTree = PartsTreeSystem.Utility.CreateNodeFromNodeTreeGroup(NodeTreeGroup, state.Env);
 				CommandManager = new PartsTreeSystem.CommandManager();
 			}
@@ -462,8 +462,8 @@ namespace PartsTreeSystemExample
 			public void Load(string path, EditorState state)
 			{
 				var text = System.IO.File.ReadAllText(path);
-				NodeTreeGroup = PartsTreeSystem.NodeTreeGroup.Deserialize(text);
-				EditorProperty = new PartsTreeSystem.NodeTreeGroupEditorProperty(NodeTreeGroup, state.Env);
+				NodeTreeGroup = PartsTreeSystem.NodeTreeAsset.Deserialize(text);
+				EditorProperty = new PartsTreeSystem.NodeTreeAssetEditorProperty(NodeTreeGroup, state.Env);
 				NodeTree = PartsTreeSystem.Utility.CreateNodeFromNodeTreeGroup(NodeTreeGroup, state.Env);
 				CommandManager = new PartsTreeSystem.CommandManager();
 			}
@@ -533,7 +533,7 @@ namespace PartsTreeSystemExample
 				return pathes.Where(_ => _.Value == path).FirstOrDefault().Key;
 			}
 			var text = System.IO.File.ReadAllText(path);
-			var nodeTreeGroup = PartsTreeSystem.NodeTreeGroup.Deserialize(text);
+			var nodeTreeGroup = PartsTreeSystem.NodeTreeAsset.Deserialize(text);
 
 			pathes.Add(nodeTreeGroup, path);
 			return nodeTreeGroup;

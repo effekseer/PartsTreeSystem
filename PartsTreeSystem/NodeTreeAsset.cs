@@ -5,74 +5,7 @@ using System.Linq;
 
 namespace PartsTreeSystem
 {
-	public class NodeTree : IInstanceContainer
-	{
-		public INode Root;
-
-		public IInstance FindInstance(int id)
-		{
-			return FindInstance(Root, id);
-		}
-
-		public INode FindParent(int id)
-		{
-			return FindParent(Root, id);
-		}
-
-		IInstance FindInstance(INode node, int id)
-		{
-			if (node.InstanceID == id)
-			{
-				return node;
-			}
-
-			foreach (var child in node.GetChildren())
-			{
-				var result = FindInstance(child, id);
-				if (result != null)
-				{
-					return result;
-				}
-			}
-
-			return null;
-
-		}
-
-		INode FindParent(INode parent, int id)
-		{
-			if (parent.GetChildren().Any(_ => _.InstanceID == id))
-			{
-				return parent;
-			}
-
-			foreach (var child in parent.GetChildren())
-			{
-				var result = FindParent(child, id);
-				if (result != null)
-				{
-					return result;
-				}
-			}
-
-			return null;
-		}
-	}
-
-	class NodeTreeBase
-	{
-		public string BaseType;
-
-		public string Template;
-
-		public Dictionary<int, int> IDRemapper = new Dictionary<int, int>();
-
-		public Dictionary<int, Difference> Differences = new Dictionary<int, Difference>();
-
-		public int ParentID;
-	}
-
-	class NodeTreeGroupInternalData
+	class NodeTreeAssetInternalData
 	{
 		public List<NodeTreeBase> Bases = new List<NodeTreeBase>();
 
@@ -81,15 +14,15 @@ namespace PartsTreeSystem
 			return JsonSerializer.Serialize(this);
 		}
 
-		public static NodeTreeGroupInternalData Deserialize(string json)
+		public static NodeTreeAssetInternalData Deserialize(string json)
 		{
-			return JsonSerializer.Deserialize<NodeTreeGroupInternalData>(json);
+			return JsonSerializer.Deserialize<NodeTreeAssetInternalData>(json);
 		}
 	}
 
-	public class NodeTreeGroup : Asset
+	public class NodeTreeAsset : Asset
 	{
-		internal NodeTreeGroupInternalData InternalData = new NodeTreeGroupInternalData();
+		internal NodeTreeAssetInternalData InternalData = new NodeTreeAssetInternalData();
 		int GenerateGUID()
 		{
 			var rand = new Random();
@@ -161,7 +94,7 @@ namespace PartsTreeSystem
 			return AddNodeInternal(parentInstanceID, env.GetTypeName(nodeType), env);
 		}
 
-		public int AddNodeTreeGroup(int parentInstanceID, NodeTreeGroup nodeTreeGroup, Environment env)
+		public int AddNodeTreeGroup(int parentInstanceID, NodeTreeAsset nodeTreeGroup, Environment env)
 		{
 			var node = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
 
@@ -288,23 +221,23 @@ namespace PartsTreeSystem
 		public string Serialize(Environment env)
 		{
 			var json = InternalData.Serialize();
-			var internalData = NodeTreeGroupInternalData.Deserialize(json);
+			var internalData = NodeTreeAssetInternalData.Deserialize(json);
 
 			RemoveUnusedVariables(internalData, env);
 
 			return internalData.Serialize();
 		}
 
-		public static NodeTreeGroup Deserialize(string json)
+		public static NodeTreeAsset Deserialize(string json)
 		{
-			var prefab = new NodeTreeGroup();
+			var prefab = new NodeTreeAsset();
 
-			prefab.InternalData = NodeTreeGroupInternalData.Deserialize(json);
+			prefab.InternalData = NodeTreeAssetInternalData.Deserialize(json);
 
 			return prefab;
 		}
 
-		void RemoveUnusedVariables(NodeTreeGroupInternalData internalData, Environment env)
+		void RemoveUnusedVariables(NodeTreeAssetInternalData internalData, Environment env)
 		{
 			var nodeIDs = new HashSet<int>();
 			foreach (var nodeBase in internalData.Bases)

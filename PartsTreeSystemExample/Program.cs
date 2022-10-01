@@ -129,18 +129,17 @@ namespace PartsTreeSystemExample
 				{
 					context.CommandManager.StartEditFields(context.NodeTreeGroup, context.NodeTree, state.SelectedNode, state.Env);
 
-					void updateFields(NodeTreeGroupContext context, Node selectedNode, FieldGetterSetter[] getterSetters)
+					void updateFields(NodeTreeGroupContext context, Node selectedNode, ElementGetterSetterArray elementGetterSetterArray)
 					{
 						var prop = context.EditorProperty.Properties.FirstOrDefault(_ => _.InstanceID == selectedNode.InstanceID);
 						bool isValueChanged = false;
 						if (prop != null)
 						{
-							isValueChanged = prop.IsValueEdited(getterSetters.Select(_ => _.GetName()).ToArray());
+							isValueChanged = prop.IsValueEdited(elementGetterSetterArray.Names);
 						}
 
-						var getterSetter = getterSetters.Last();
-						var value = getterSetter.GetValue();
-						var name = getterSetter.GetName();
+						var value = elementGetterSetterArray.GetValue();
+						var name = elementGetterSetterArray.GetName();
 
 						if (isValueChanged)
 						{
@@ -158,7 +157,7 @@ namespace PartsTreeSystemExample
 							var result = Altseed2.Engine.Tool.InputText(name, s, 200, Altseed2.ToolInputTextFlags.None);
 							if (result != null)
 							{
-								getterSetter.SetValue(result);
+								elementGetterSetterArray.SetValue(result);
 								context.CommandManager.NotifyEditFields(selectedNode);
 							}
 						}
@@ -168,7 +167,7 @@ namespace PartsTreeSystemExample
 
 							if (Altseed2.Engine.Tool.DragInt(name, ref v, 1, -100, 100, "%d", Altseed2.ToolSliderFlags.None))
 							{
-								getterSetter.SetValue(v);
+								elementGetterSetterArray.SetValue(v);
 								context.CommandManager.NotifyEditFields(selectedNode);
 							}
 						}
@@ -178,7 +177,7 @@ namespace PartsTreeSystemExample
 
 							if (Altseed2.Engine.Tool.DragFloat(name, ref v, 1, -100, 100, "%f", Altseed2.ToolSliderFlags.None))
 							{
-								getterSetter.SetValue(v);
+								elementGetterSetterArray.SetValue(v);
 								context.CommandManager.NotifyEditFields(selectedNode);
 							}
 						}
@@ -188,24 +187,11 @@ namespace PartsTreeSystemExample
 
 							var fields = v.GetType().GetFields();
 
-							var getterSetterNest = new FieldGetterSetter();
-							var getterSetterTree = getterSetters.Concat(new[] { getterSetterNest }).ToArray();
 							foreach (var field in fields)
 							{
-								getterSetterNest.Reset(v, field);
-								updateFields(context, selectedNode, getterSetterTree);
-
-								if (getterSetterNest.IsDirtied)
-								{
-									for (int i = getterSetterTree.Length - 1; i >= 1; i--)
-									{
-										getterSetterTree[i - 1].SetValue(getterSetterTree[i].Parent);
-										if (getterSetterTree[i - 1].IsParentClass)
-										{
-											break;
-										}
-									}
-								}
+								elementGetterSetterArray.Push(v, field);
+								updateFields(context, selectedNode, elementGetterSetterArray);
+								elementGetterSetterArray.Pop();
 							}
 						}
 						else if (value is Parameter)
@@ -214,12 +200,11 @@ namespace PartsTreeSystemExample
 
 							var fields = v.GetType().GetFields();
 
-							var getterSetterNest = new FieldGetterSetter();
-
 							foreach (var field in fields)
 							{
-								getterSetterNest.Reset(v, field);
-								updateFields(context, selectedNode, getterSetters.Concat(new[] { getterSetterNest }).ToArray());
+								elementGetterSetterArray.Push(v, field);
+								updateFields(context, selectedNode, elementGetterSetterArray);
+								elementGetterSetterArray.Pop();
 							}
 						}
 						else if (value is IList)
@@ -233,12 +218,11 @@ namespace PartsTreeSystemExample
 								context.CommandManager.NotifyEditFields(selectedNode);
 							}
 
-							var getterSetterNest = new FieldGetterSetter();
-
 							for (int i = 0; i < v.Count; i++)
 							{
-								getterSetterNest.Reset(v, i);
-								updateFields(context, selectedNode, getterSetters.Concat(new[] { getterSetterNest }).ToArray());
+								elementGetterSetterArray.Push(v, i);
+								updateFields(context, selectedNode, elementGetterSetterArray);
+								elementGetterSetterArray.Pop();
 							}
 						}
 						else
@@ -249,12 +233,12 @@ namespace PartsTreeSystemExample
 
 					var fields = state.SelectedNode.GetType().GetFields();
 
-					var getterSetter = new FieldGetterSetter();
-
+					var elementGetterSetterArray = new ElementGetterSetterArray();
 					foreach (var field in fields)
 					{
-						getterSetter.Reset(state.SelectedNode, field);
-						updateFields(context, state.SelectedNode, new[] { getterSetter });
+						elementGetterSetterArray.Push(state.SelectedNode, field);
+						updateFields(context, state.SelectedNode, elementGetterSetterArray);
+						elementGetterSetterArray.Pop();
 					}
 
 					context.CommandManager.EndEditFields(state.SelectedNode, state.Env);
@@ -575,54 +559,104 @@ namespace PartsTreeSystemExample
 		public float Param3;
 	}
 
-	class FieldGetterSetter
+	class ElementGetterSetterArray
 	{
-		System.Reflection.FieldInfo fieldInfo;
-		int? index;
-		public bool IsDirtied { get; private set; } = false;
-
-		public bool IsParentClass { get => Parent.GetType().IsClass; }
-
-		public object Parent { get; private set; }
-
-		public void Reset(object o, System.Reflection.FieldInfo fieldInfo)
+		class Element
 		{
-			Parent = o;
-			this.fieldInfo = fieldInfo;
-			index = null;
-			IsDirtied = false;
+			public System.Reflection.FieldInfo fieldInfo;
+			public int? index;
+			public object parent;
+
+			public void Reset()
+			{
+				fieldInfo = null;
+				index = null;
+				parent = null;
+			}
+
+			public string GetName()
+			{
+				if (fieldInfo != null)
+				{
+					return fieldInfo.Name;
+				}
+				else if (index.HasValue)
+				{
+					return index.Value.ToString();
+				}
+
+				return string.Empty;
+			}
+
+			public void SetValue(object value)
+			{
+				if (fieldInfo != null)
+				{
+					fieldInfo.SetValue(parent, value);
+				}
+				else if (index.HasValue)
+				{
+					Helper.SetValueToIndex(parent, value, index.Value);
+				}
+			}
 		}
 
-		public void Reset(object o, int index)
+		int currentIndex = -1;
+		List<Element> elements = new List<Element>(8);
+
+		public string[] Names { get => elements.Take(currentIndex + 1).Select(_ => _.GetName()).ToArray(); }
+
+		public void Push(object o, System.Reflection.FieldInfo fieldInfo)
 		{
-			Parent = o;
-			fieldInfo = null;
-			this.index = index;
+			var elm = PushElement();
+			elm.parent = o;
+			elm.fieldInfo = fieldInfo;
+		}
+
+		public void Push(object o, int index)
+		{
+			var elm = PushElement();
+			elm.parent = o;
+			elm.index = index;
+		}
+
+		Element PushElement()
+		{
+			currentIndex += 1;
+			if (elements.Count <= currentIndex)
+			{
+				elements.Add(new Element());
+			}
+			else
+			{
+				elements[currentIndex].Reset();
+			}
+
+			return elements[currentIndex];
+		}
+
+		public void Pop()
+		{
+			currentIndex--;
 		}
 
 		public string GetName()
 		{
-			if (fieldInfo != null)
-			{
-				return fieldInfo.Name;
-			}
-			else if (index.HasValue)
-			{
-				return index.Value.ToString();
-			}
-
-			return string.Empty;
+			var elm = elements[currentIndex];
+			return elm.GetName();
 		}
 
 		public object GetValue()
 		{
-			if (fieldInfo != null)
+			var elm = elements[currentIndex];
+
+			if (elm.fieldInfo != null)
 			{
-				return fieldInfo.GetValue(Parent);
+				return elm.fieldInfo.GetValue(elm.parent);
 			}
-			else if (index.HasValue)
+			else if (elm.index.HasValue)
 			{
-				return Helper.GetValueWithIndex(Parent, index.Value);
+				return Helper.GetValueWithIndex(elm.parent, elm.index.Value);
 			}
 
 			return null;
@@ -630,15 +664,25 @@ namespace PartsTreeSystemExample
 
 		public void SetValue(object value)
 		{
-			if (fieldInfo != null)
+			var elm = elements[currentIndex];
+			elm.SetValue(value);
+
+			if (elm.fieldInfo != null)
 			{
-				fieldInfo.SetValue(Parent, value);
-				IsDirtied = true;
+				elm.fieldInfo.SetValue(elm.parent, value);
 			}
-			else if (index.HasValue)
+			else if (elm.index.HasValue)
 			{
-				Helper.SetValueToIndex(Parent, value, index.Value);
-				IsDirtied = true;
+				Helper.SetValueToIndex(elm.parent, value, elm.index.Value);
+			}
+
+			for (int i = currentIndex; i > 0; i--)
+			{
+				if (elements[i].parent.GetType().IsClass)
+				{
+					break;
+				}
+				elements[i - 1].SetValue(elements[i].parent);
 			}
 		}
 	}

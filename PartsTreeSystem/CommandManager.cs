@@ -227,7 +227,7 @@ namespace PartsTreeSystem
 
 		void AddNodeInternal(NodeTreeAsset nodeTreeGroup, NodeTree nodeTree, int parentID, Environment env, string before, int newNodeID, string after, string commandName)
 		{
-			Action execute = () =>
+			void execute()
 			{
 				var parentNode = nodeTree.FindInstance(parentID) as INode;
 				var newNodeTree = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
@@ -310,7 +310,7 @@ namespace PartsTreeSystem
 
 			var after = nodeTreeGroup.InternalData.Serialize(env);
 
-			Action execute = () =>
+			void execute()
 			{
 				var currentParentNode = nodeTree.FindInstance(parentNodeID) as INode;
 				currentParentNode.RemoveChild(nodeID);
@@ -416,7 +416,7 @@ namespace PartsTreeSystem
 
 			var after = nodeTreeGroup.InternalData.Serialize(env);
 
-			Action execute = () =>
+			void execute()
 			{
 				var node = nodeTree.FindInstance(nodeID) as INode;
 				var insertedParentNodeInner = nodeTree.FindInstance(insertedParentNodeID) as INode;

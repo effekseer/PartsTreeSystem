@@ -112,6 +112,35 @@ namespace PartsTreeSystem
 		}
 
 
+		public string Copy(int instanceID, Environment env)
+		{
+			if (instanceID < 0)
+			{
+				return null;
+			}
+
+			var nodeBase = InternalData.Bases.FirstOrDefault(_ => _.IDRemapper.ContainsValue(instanceID));
+			if (nodeBase == null)
+			{
+				return null;
+			}
+
+			var collectedBases = CollectChildren(nodeBase);
+
+			return JsonSerializer.Serialize(collectedBases, env);
+		}
+
+		public void Paste(string data, int instanceID, Environment env)
+		{
+			List<NodeTreeBase> nodeTreeBases = JsonSerializer.Deserialize<List<NodeTreeBase>>(data, env);
+			if (nodeTreeBases == null)
+			{
+				return;
+			}
+
+
+			// TODO
+		}
 
 		public bool CanRemoveNode(int instanceID, Environment env)
 		{
@@ -144,9 +173,20 @@ namespace PartsTreeSystem
 			}
 
 			var nodeBase = InternalData.Bases.FirstOrDefault(_ => _.IDRemapper.ContainsValue(instanceID));
+			List<NodeTreeBase> collectedBases = CollectChildren(nodeBase);
 
-			var removingNodeBases = new List<NodeTreeBase>();
-			removingNodeBases.Add(nodeBase);
+			foreach (var r in collectedBases)
+			{
+				InternalData.Bases.Remove(r);
+			}
+
+			return true;
+		}
+
+		private List<NodeTreeBase> CollectChildren(NodeTreeBase nodeBase)
+		{
+			var collectedBases = new List<NodeTreeBase>();
+			collectedBases.Add(nodeBase);
 
 			bool changing = true;
 
@@ -156,25 +196,20 @@ namespace PartsTreeSystem
 
 				foreach (var b in InternalData.Bases)
 				{
-					if (removingNodeBases.Contains(b))
+					if (collectedBases.Contains(b))
 					{
 						continue;
 					}
 
-					if (removingNodeBases.Any(_ => _.IDRemapper.ContainsKey(b.ParentID)))
+					if (collectedBases.Any(_ => _.IDRemapper.ContainsKey(b.ParentID)))
 					{
 						changing = true;
-						removingNodeBases.Add(b);
+						collectedBases.Add(b);
 					}
 				}
 			}
 
-			foreach (var r in removingNodeBases)
-			{
-				InternalData.Bases.Remove(r);
-			}
-
-			return true;
+			return collectedBases;
 		}
 
 		internal override Difference GetDifference(int instanceID)

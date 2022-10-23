@@ -455,6 +455,51 @@ namespace PartsTreeSystem
 
 		}
 
+		public void Paste(NodeTreeAsset nodeTreeGroup, NodeTree nodeTree, int instanceID, string data, Environment env)
+		{
+			var before = nodeTreeGroup.InternalData.Serialize(env);
+			var newNodeID = nodeTreeGroup.Paste(data, instanceID, env);
+			var after = nodeTreeGroup.InternalData.Serialize(env);
+
+			void execute()
+			{
+				var selfNode = nodeTree.FindInstance(instanceID) as INode;
+				var parentNode = nodeTree.FindInstance(selfNode.InstanceID) as INode;
+				var newNodeTree = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
+				var newNode = newNodeTree.FindInstance(newNodeID);
+
+				parentNode.InsertChild(parentNode.GetChildren().ToList().IndexOf(selfNode), newNode as INode);
+				parentNode.RemoveChild(selfNode.InstanceID);
+			};
+
+			execute();
+
+			var command = new DelegateCommand();
+			command.OnExecute = () =>
+			{
+				nodeTreeGroup.InternalData = NodeTreeAssetInternalData.Deserialize(after, env);
+				execute();
+			};
+
+			command.OnUnexecute = () =>
+			{
+				var parent = nodeTree.FindParent(newNodeID);
+				if (parent != null)
+				{
+					parent.RemoveChild(newNodeID);
+				}
+
+				nodeTreeGroup.InternalData = NodeTreeAssetInternalData.Deserialize(before, env);
+
+				// TODO
+			};
+
+			command.Name = "Paste";
+			command.Detail = string.Empty;
+
+			AddCommand(command);
+		}
+
 		public void StartEditFields(Asset asset, IInstanceContainer instanceContainer, IInstance editedInstance, Environment environment)
 		{
 			var state = new EditFieldState { Target = editedInstance, Asset = asset, Container = instanceContainer };

@@ -130,16 +130,69 @@ namespace PartsTreeSystem
 			return JsonSerializer.Serialize(collectedBases, env);
 		}
 
-		public void Paste(string data, int instanceID, Environment env)
+		public int Paste(string data, int instanceID, Environment env)
 		{
+			if (instanceID < 0)
+			{
+				return -1;
+			}
+
+			var originalNodeBase = InternalData.Bases.FirstOrDefault(_ => _.IDRemapper.ContainsValue(instanceID));
+			if (originalNodeBase == null)
+			{
+				return -1;
+			}
+
 			List<NodeTreeBase> nodeTreeBases = JsonSerializer.Deserialize<List<NodeTreeBase>>(data, env);
 			if (nodeTreeBases == null)
 			{
-				return;
+				return -1;
 			}
 
+			var oldIds = new HashSet<int>();
 
-			// TODO
+			foreach (var nodeTreeBase in nodeTreeBases)
+			{
+				foreach (var remapper in nodeTreeBase.IDRemapper)
+				{
+					oldIds.Add(remapper.Value);
+				}
+			}
+
+			var oldIdToNewIds = new Dictionary<int, int>();
+			foreach (var oldId in oldIds)
+			{
+				oldIdToNewIds.Add(oldId, GenerateGUID());
+			}
+
+			int getNewId(int id)
+			{
+				if (oldIdToNewIds.ContainsKey(id))
+				{
+					return oldIdToNewIds[id];
+				}
+
+				return id;
+			}
+
+			foreach (var nodeTreeBase in nodeTreeBases)
+			{
+				Dictionary<int, int> idRemapper = new Dictionary<int, int>();
+				foreach (var kv in nodeTreeBase.IDRemapper)
+				{
+					idRemapper.Add(kv.Key, kv.Value);
+				}
+
+				nodeTreeBase.IDRemapper = idRemapper;
+				nodeTreeBase.ParentID = getNewId(nodeTreeBase.ParentID);
+			}
+
+			nodeTreeBases[0].ParentID = originalNodeBase.ParentID;
+
+			InternalData.Bases.InsertRange(InternalData.Bases.IndexOf(originalNodeBase), nodeTreeBases);
+			InternalData.Bases.Remove(originalNodeBase);
+
+			return getNewId(instanceID);
 		}
 
 		public bool CanRemoveNode(int instanceID, Environment env)

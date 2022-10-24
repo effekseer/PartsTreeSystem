@@ -464,7 +464,7 @@ namespace PartsTreeSystem
 			void execute()
 			{
 				var selfNode = nodeTree.FindInstance(instanceID) as INode;
-				var parentNode = nodeTree.FindInstance(selfNode.InstanceID) as INode;
+				var parentNode = nodeTree.FindParent(selfNode.InstanceID) as INode;
 				var newNodeTree = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
 				var newNode = newNodeTree.FindInstance(newNodeID);
 
@@ -484,14 +484,16 @@ namespace PartsTreeSystem
 			command.OnUnexecute = () =>
 			{
 				var parent = nodeTree.FindParent(newNodeID);
-				if (parent != null)
-				{
-					parent.RemoveChild(newNodeID);
-				}
 
 				nodeTreeGroup.InternalData = NodeTreeAssetInternalData.Deserialize(before, env);
+				var selfNode = nodeTree.FindInstance(instanceID) as INode;
+				var newNode = nodeTree.FindInstance(newNodeID);
 
-				// TODO
+				if (parent != null)
+				{
+					parent.InsertChild(parent.GetChildren().ToList().IndexOf(newNode as INode), selfNode as INode);
+					parent.RemoveChild(newNodeID);
+				}
 			};
 
 			command.Name = "Paste";

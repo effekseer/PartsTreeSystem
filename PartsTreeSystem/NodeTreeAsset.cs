@@ -143,7 +143,7 @@ namespace PartsTreeSystem
 				return -1;
 			}
 
-			List<NodeTreeBase> nodeTreeBases = JsonSerializer.Deserialize<List<NodeTreeBase>>(data, env);
+			var nodeTreeBases = JsonSerializer.Deserialize<List<NodeTreeBase>>(data, env);
 			if (nodeTreeBases == null)
 			{
 				return -1;
@@ -180,7 +180,7 @@ namespace PartsTreeSystem
 				Dictionary<int, int> idRemapper = new Dictionary<int, int>();
 				foreach (var kv in nodeTreeBase.IDRemapper)
 				{
-					idRemapper.Add(kv.Key, kv.Value);
+					idRemapper.Add(getNewId(kv.Key), getNewId(kv.Value));
 				}
 
 				nodeTreeBase.IDRemapper = idRemapper;
@@ -192,6 +192,7 @@ namespace PartsTreeSystem
 			InternalData.Bases.InsertRange(InternalData.Bases.IndexOf(originalNodeBase), nodeTreeBases);
 			InternalData.Bases.Remove(originalNodeBase);
 
+			// FIXIT : It must return id of nodeTreeBases root
 			return getNewId(instanceID);
 		}
 

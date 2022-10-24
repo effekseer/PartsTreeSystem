@@ -192,8 +192,9 @@ namespace PartsTreeSystem
 			InternalData.Bases.InsertRange(InternalData.Bases.IndexOf(originalNodeBase), nodeTreeBases);
 			InternalData.Bases.Remove(originalNodeBase);
 
-			// FIXIT : It must return id of nodeTreeBases root
-			return getNewId(instanceID);
+			// TODO : Refactor
+			var rootNode = Utility.CreateNode(this, nodeTreeBases[0], env);
+			return getNewId(nodeTreeBases[0].IDRemapper[rootNode.InstanceID]);
 		}
 
 		public bool CanRemoveNode(int instanceID, Environment env)
@@ -255,7 +256,7 @@ namespace PartsTreeSystem
 						continue;
 					}
 
-					if (collectedBases.Any(_ => _.IDRemapper.ContainsKey(b.ParentID)))
+					if (collectedBases.Any(_ => _.IDRemapper.ContainsValue(b.ParentID)))
 					{
 						changing = true;
 						collectedBases.Add(b);

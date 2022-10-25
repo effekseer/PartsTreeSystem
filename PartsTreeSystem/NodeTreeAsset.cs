@@ -184,6 +184,15 @@ namespace PartsTreeSystem
 				}
 
 				nodeTreeBase.IDRemapper = idRemapper;
+
+				var difference = new Dictionary<int, Difference>();
+				foreach (var df in nodeTreeBase.Differences)
+				{
+					difference.Add(getNewId(df.Key), df.Value);
+				}
+
+				nodeTreeBase.Differences = difference;
+
 				nodeTreeBase.ParentID = getNewId(nodeTreeBase.ParentID);
 			}
 

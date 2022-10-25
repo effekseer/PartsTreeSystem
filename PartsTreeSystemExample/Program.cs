@@ -510,10 +510,6 @@ namespace PartsTreeSystemExample
 
 		public void AddChild(PartsTreeSystem.INode node)
 		{
-			if(node == null)
-			{
-				throw new ArgumentNullException();
-			}
 			Children.Add(node as Node);
 		}
 
@@ -524,10 +520,6 @@ namespace PartsTreeSystemExample
 
 		public void InsertChild(int index, PartsTreeSystem.INode node)
 		{
-			if (node == null)
-			{
-				throw new ArgumentNullException();
-			}
 			Children.Insert(index, node as Node);
 		}
 

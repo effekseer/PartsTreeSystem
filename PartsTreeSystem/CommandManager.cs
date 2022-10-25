@@ -486,7 +486,8 @@ namespace PartsTreeSystem
 				var parent = nodeTree.FindParent(newNodeID);
 
 				nodeTreeGroup.InternalData = NodeTreeAssetInternalData.Deserialize(before, env);
-				var selfNode = nodeTree.FindInstance(instanceID) as INode;
+				var newNodeTree = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
+				var selfNode = newNodeTree.FindInstance(instanceID) as INode;
 				var newNode = nodeTree.FindInstance(newNodeID);
 
 				if (parent != null)

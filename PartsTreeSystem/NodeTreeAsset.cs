@@ -112,6 +112,99 @@ namespace PartsTreeSystem
 		}
 
 
+		public string Copy(int instanceID, Environment env)
+		{
+			if (instanceID < 0)
+			{
+				return null;
+			}
+
+			var nodeBase = InternalData.Bases.FirstOrDefault(_ => _.IDRemapper.ContainsValue(instanceID));
+			if (nodeBase == null)
+			{
+				return null;
+			}
+
+			var collectedBases = CollectChildren(nodeBase);
+
+			return JsonSerializer.Serialize(collectedBases, env);
+		}
+
+		public int Paste(string data, int instanceID, Environment env)
+		{
+			if (instanceID < 0)
+			{
+				return -1;
+			}
+
+			var originalNodeBase = InternalData.Bases.FirstOrDefault(_ => _.IDRemapper.ContainsValue(instanceID));
+			if (originalNodeBase == null)
+			{
+				return -1;
+			}
+
+			var nodeTreeBases = JsonSerializer.Deserialize<List<NodeTreeBase>>(data, env);
+			if (nodeTreeBases == null)
+			{
+				return -1;
+			}
+
+			var oldIds = new HashSet<int>();
+
+			foreach (var nodeTreeBase in nodeTreeBases)
+			{
+				foreach (var remapper in nodeTreeBase.IDRemapper)
+				{
+					oldIds.Add(remapper.Value);
+				}
+			}
+
+			var oldIdToNewIds = new Dictionary<int, int>();
+			foreach (var oldId in oldIds)
+			{
+				oldIdToNewIds.Add(oldId, GenerateGUID());
+			}
+
+			int getNewId(int id)
+			{
+				if (oldIdToNewIds.ContainsKey(id))
+				{
+					return oldIdToNewIds[id];
+				}
+
+				return id;
+			}
+
+			foreach (var nodeTreeBase in nodeTreeBases)
+			{
+				Dictionary<int, int> idRemapper = new Dictionary<int, int>();
+				foreach (var kv in nodeTreeBase.IDRemapper)
+				{
+					idRemapper.Add(getNewId(kv.Key), getNewId(kv.Value));
+				}
+
+				nodeTreeBase.IDRemapper = idRemapper;
+
+				var difference = new Dictionary<int, Difference>();
+				foreach (var df in nodeTreeBase.Differences)
+				{
+					difference.Add(getNewId(df.Key), df.Value);
+				}
+
+				nodeTreeBase.Differences = difference;
+
+				nodeTreeBase.ParentID = getNewId(nodeTreeBase.ParentID);
+			}
+
+			nodeTreeBases[0].ParentID = originalNodeBase.ParentID;
+
+			InternalData.Bases.InsertRange(InternalData.Bases.IndexOf(originalNodeBase), nodeTreeBases);
+			InternalData.Bases.Remove(originalNodeBase);
+
+			// TODO : Refactor
+			var rootNode = Utility.CreateNode(this, nodeTreeBases[0], env);
+			return getNewId(nodeTreeBases[0].IDRemapper[rootNode.InstanceID]);
+		}
 
 		public bool CanRemoveNode(int instanceID, Environment env)
 		{
@@ -144,9 +237,20 @@ namespace PartsTreeSystem
 			}
 
 			var nodeBase = InternalData.Bases.FirstOrDefault(_ => _.IDRemapper.ContainsValue(instanceID));
+			List<NodeTreeBase> collectedBases = CollectChildren(nodeBase);
 
-			var removingNodeBases = new List<NodeTreeBase>();
-			removingNodeBases.Add(nodeBase);
+			foreach (var r in collectedBases)
+			{
+				InternalData.Bases.Remove(r);
+			}
+
+			return true;
+		}
+
+		private List<NodeTreeBase> CollectChildren(NodeTreeBase nodeBase)
+		{
+			var collectedBases = new List<NodeTreeBase>();
+			collectedBases.Add(nodeBase);
 
 			bool changing = true;
 
@@ -156,25 +260,20 @@ namespace PartsTreeSystem
 
 				foreach (var b in InternalData.Bases)
 				{
-					if (removingNodeBases.Contains(b))
+					if (collectedBases.Contains(b))
 					{
 						continue;
 					}
 
-					if (removingNodeBases.Any(_ => _.IDRemapper.ContainsKey(b.ParentID)))
+					if (collectedBases.Any(_ => _.IDRemapper.ContainsValue(b.ParentID)))
 					{
 						changing = true;
-						removingNodeBases.Add(b);
+						collectedBases.Add(b);
 					}
 				}
 			}
 
-			foreach (var r in removingNodeBases)
-			{
-				InternalData.Bases.Remove(r);
-			}
-
-			return true;
+			return collectedBases;
 		}
 
 		internal override Difference GetDifference(int instanceID)

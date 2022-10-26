@@ -335,6 +335,28 @@ namespace PartsTreeSystemExample
 								}
 							}
 
+							if (Altseed2.Engine.Tool.MenuItem("Copy Node", "", false, true))
+							{
+								var instanceID = popupedNode.InstanceID;
+								delayEvents.Add(() =>
+								{
+									var text = nodeTreeGroup.Copy(instanceID, env);
+									Altseed2.Engine.Tool.SetClipboardText(text);
+								});
+								Altseed2.Engine.Tool.CloseCurrentPopup();
+							}
+
+							if (Altseed2.Engine.Tool.MenuItem("Paste Node", "", false, true))
+							{
+								var instanceID = popupedNode.InstanceID;
+								delayEvents.Add(() =>
+								{
+									commandManager.Paste(nodeTreeGroup, nodeTree, instanceID, Altseed2.Engine.Tool.GetClipboardText(), env);
+									nodeTreeGroupEditorProperty.Rebuild();
+								});
+								Altseed2.Engine.Tool.CloseCurrentPopup();
+							}
+
 							if (prop.Generator is PartsTreeSystem.Asset)
 							{
 								var path = env.GetAssetPath(prop.Generator as PartsTreeSystem.Asset);

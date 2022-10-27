@@ -19,6 +19,42 @@ namespace PartsTreeSystem
 		virtual public CommandInformation GetInformation() { return null; }
 	}
 
+	public class CommandCollectionCommand : Command
+	{
+		Command[] commands;
+
+		public CommandCollectionCommand(IEnumerable<Command> commands)
+		{
+			this.commands = commands.ToArray();
+		}
+
+		public override void Execute(Environment env)
+		{
+			foreach (var c in commands)
+			{
+				c.Execute(env);
+			}
+		}
+
+		public override void Unexecute(Environment env)
+		{
+			foreach (var c in commands.Reverse())
+			{
+				c.Unexecute(env);
+			}
+		}
+
+		public override CommandInformation GetInformation()
+		{
+			var info = new CommandInformation();
+			info.Name = "Collection";
+
+			info.Detail = string.Join("\n", commands.Select(_ => { return _.GetInformation().Name; }));
+
+			return base.GetInformation();
+		}
+	}
+
 	public class DelegateCommand : Command
 	{
 		public Action OnExecute;
@@ -134,6 +170,10 @@ namespace PartsTreeSystem
 
 		List<Command> commands = new List<Command>();
 
+		int mergingBlockCount = 0;
+
+		List<Command> mergingBlock = new List<Command>();
+
 		public IReadOnlyList<Command> Commands
 		{
 			get
@@ -150,21 +190,62 @@ namespace PartsTreeSystem
 			}
 		}
 
+		public bool IsInMergingBlock
+		{
+			get
+			{
+				return mergingBlockCount > 0;
+			}
+		}
+
 		public void AddCommand(Command command)
 		{
-			if (TryMergeCommand(command))
+			if (IsInMergingBlock)
 			{
-				return;
+				if (mergingBlock.Count > 0)
+				{
+					var newCommand = TryMergeCommand(mergingBlock.Last(), command);
+					if (newCommand != null)
+					{
+						mergingBlock[mergingBlock.Count - 1] = newCommand;
+					}
+					else
+					{
+						mergingBlock.Add(command);
+					}
+				}
+				else
+				{
+					mergingBlock.Add(command);
+				}
+			}
+			else
+			{
+				if (TryMergeCommand(command))
+				{
+					return;
+				}
+
+				var count = commands.Count - (currentCommand + 1);
+				if (count > 0)
+				{
+					commands.RemoveRange(currentCommand + 1, count);
+				}
+				commands.Add(command);
+				currentCommand += 1;
+				blockMerge = false;
+			}
+		}
+
+		Command TryMergeCommand(Command command1, Command command2)
+		{
+			if (command1 is ValueChangeCommand vc1 && command2 is ValueChangeCommand vc2)
+			{
+				var newCommand = ValueChangeCommand.Merge(vc1, vc2);
+				return newCommand;
 			}
 
-			var count = commands.Count - (currentCommand + 1);
-			if (count > 0)
-			{
-				commands.RemoveRange(currentCommand + 1, count);
-			}
-			commands.Add(command);
-			currentCommand += 1;
-			blockMerge = false;
+			return null;
 		}
 
 		bool TryMergeCommand(Command command)
@@ -174,14 +255,12 @@ namespace PartsTreeSystem
 				return false;
 			}
 
-			if (command is ValueChangeCommand vc && commands[currentCommand] is ValueChangeCommand lastCommand)
+			var newCommand = TryMergeCommand(commands[currentCommand], command);
+
+			if (newCommand != null)
 			{
-				var newCommand = ValueChangeCommand.Merge(lastCommand, vc);
-				if (newCommand != null)
-				{
-					ReplaceLastCommand(newCommand);
-					return true;
-				}
+				ReplaceLastCommand(newCommand);
+				return true;
 			}
 
 			return false;
@@ -570,6 +649,30 @@ namespace PartsTreeSystem
 		public void SetFlagToBlockMergeCommands()
 		{
 			blockMerge = true;
+		}
+
+		public void PushMergingBlock()
+		{
+			mergingBlockCount++;
+		}
+
+		public void PopMergingBlock()
+		{
+			if (mergingBlockCount == 0)
+			{
+				throw new InvalidOperationException();
+			}
+
+			mergingBlockCount--;
+			if (mergingBlockCount == 0)
+			{
+				if (mergingBlock.Count > 0)
+				{
+					var cmd = new CommandCollectionCommand(mergingBlock);
+					mergingBlock.Clear();
+					AddCommand(cmd);
+				}
+			}
 		}
 	}
 }

@@ -33,6 +33,28 @@ namespace PartsTreeSystemTest
 		}
 
 		[Test]
+		public void Merging()
+		{
+			var env = new PartsTreeSystem.Environment();
+			var commandManager = new CommandManager();
+			var nodeTreeGroup = new NodeTreeAsset();
+			nodeTreeGroup.Init(typeof(Node), env);
+			var instance = Utility.CreateNodeFromNodeTreeGroup(nodeTreeGroup, env);
+
+			commandManager.PushMergingBlock();
+			commandManager.AddNode(nodeTreeGroup, instance, instance.Root.InstanceID, typeof(Node), env);
+			commandManager.AddNode(nodeTreeGroup, instance, instance.Root.InstanceID, typeof(Node), env);
+			commandManager.PopMergingBlock();
+
+			commandManager.Undo(env);
+			Assert.AreEqual(0, instance.Root.GetChildren().Count);
+
+			commandManager.Redo(env);
+			Assert.AreEqual(2, instance.Root.GetChildren().Count);
+		}
+
+
+		[Test]
 		public void EditFieldPrimitive()
 		{
 			EditFieldTest<TestNodePrimitive>(true);

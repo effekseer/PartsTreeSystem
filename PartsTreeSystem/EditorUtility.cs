@@ -52,6 +52,8 @@ namespace PartsTreeSystem
 
 		public string[] Names { get => elements.Take(currentIndex + 1).Select(_ => _.GetName()).ToArray(); }
 
+		public System.Reflection.FieldInfo[] FieldInfos { get => elements.Take(currentIndex + 1).Select(_ => _.fieldInfo).ToArray(); }
+
 		public void Push(object o, System.Reflection.FieldInfo fieldInfo)
 		{
 			var elm = PushElement();

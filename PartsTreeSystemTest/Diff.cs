@@ -201,5 +201,24 @@ namespace PartsTreeSystemTest
 			Assert.AreEqual(1, diff.Modifications.Count);
 			Assert.AreEqual(2.0f, diff.Modifications.First().Value);
 		}
+
+		[Test]
+		public void DiffEnum()
+		{
+			var env = new Environment();
+			var v = new TestClassEnum();
+			v.Value1 = BasicEnum1.B;
+
+			var before = new FieldState();
+			before.Store(v, env);
+			v.Value1 = BasicEnum1.A;
+
+			var after = new FieldState();
+			after.Store(v, env);
+
+			var diff = before.GenerateDifference(after);
+			Assert.AreEqual(1, diff.Modifications.Count);
+			Assert.AreEqual(BasicEnum1.B, diff.Modifications.First().Value);
+		}
 	}
 }

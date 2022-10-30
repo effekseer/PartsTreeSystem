@@ -51,6 +51,10 @@ namespace PartsTreeSystem
 			{
 				return JToken.FromObject(self);
 			}
+			else if (self.GetType().IsEnum)
+			{
+				return JToken.FromObject(Convert.ToInt32(self));
+			}
 			else if (self.GetType().IsArray)
 			{
 				var a = new JArray();
@@ -215,6 +219,11 @@ namespace PartsTreeSystem
 					{
 						return jvalue.ToObject(type);
 					}
+					else if (type.IsEnum)
+					{
+						return jvalue.ToObject(type);
+					}
+
 					return jvalue.Value;
 				}
 				else if (jvalue.Type == JTokenType.Float)

@@ -33,7 +33,11 @@ namespace PartsTreeSystem
 				Console.WriteLine("decimal is not supported now.");
 				return null;
 			}
-			if (type.IsPrimitive)
+			else if (type.IsEnum)
+			{
+				return o;
+			}
+			else if (type.IsPrimitive)
 			{
 				// Boolean Byte SByte Int16 UInt16 Int32 UInt32 Int64 IntPtr UIntPtr Char Double Single 
 				return o;

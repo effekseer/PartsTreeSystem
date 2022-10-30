@@ -65,6 +65,18 @@ namespace PartsTreeSystemTest
 		public string ValueString;
 	}
 
+	enum BasicEnum1
+	{
+		A,
+		B,
+		C,
+	}
+
+	class TestClassEnum
+	{
+		public BasicEnum1 Value1 = BasicEnum1.A;
+	}
+
 	class TestNodeRef : Node
 	{
 		public Node Ref;

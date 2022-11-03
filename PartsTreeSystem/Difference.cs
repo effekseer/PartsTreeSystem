@@ -133,53 +133,6 @@ namespace PartsTreeSystem
 			return prefix.SequenceEqual(data.Take(prefix.Count()));
 		}
 
-		static object CreateDefaultValue(Type type)
-		{
-			if (type.IsValueType)
-			{
-				return Activator.CreateInstance(type);
-			}
-			else
-			{
-				var constructor = type.GetConstructor(new Type[] { });
-				if (constructor == null)
-				{
-					return null;
-				}
-
-				return constructor.Invoke(null);
-			}
-		}
-
-		static object GetValueWithIndex(object target, int index)
-		{
-			foreach (var pi in target.GetType().GetProperties())
-			{
-				if (pi.GetIndexParameters().Length != 1)
-				{
-					continue;
-				}
-
-				return pi.GetValue(target, new object[] { index });
-			}
-			return null;
-		}
-
-		static bool SetValueToIndex(object target, object value, int index)
-		{
-			foreach (var pi in target.GetType().GetProperties())
-			{
-				if (pi.GetIndexParameters().Length != 1)
-				{
-					continue;
-				}
-
-				pi.SetValue(target, value, new object[] { index });
-				return true;
-			}
-			return false;
-		}
-
 		public class Hierarchy
 		{
 			public List<object> Objects = new List<object>();
@@ -207,7 +160,7 @@ namespace PartsTreeSystem
 					if (obj is Array array)
 					{
 						var count = Convert.ToInt64(modification.Value);
-						objects[objects.Count - 1] = EditorUtility.ResizeArray(array, (int)count);
+						objects[objects.Count - 1] = ArrayUtility.ResizeArray(array, (int)count);
 					}
 					else if (obj is IList list)
 					{
@@ -220,7 +173,7 @@ namespace PartsTreeSystem
 						while (list.Count < count)
 						{
 							var type = obj.GetType().GetGenericArguments()[0];
-							var newValue = CreateDefaultValue(type);
+							var newValue = Utility.CreateDefaultValue(type);
 							list.Add(newValue);
 						}
 					}
@@ -236,14 +189,14 @@ namespace PartsTreeSystem
 					{
 						lastType = array.GetType().GetElementType();
 
-						var value = GetValueWithIndex(array, key.Index.Value);
+						var value = ArrayUtility.GetValueWithIndex(array, key.Index.Value);
 						objects.Add(value);
 					}
 					else if (obj is IList list)
 					{
 						lastType = list.GetType().GenericTypeArguments[0];
 
-						var value = GetValueWithIndex(list, key.Index.Value);
+						var value = ArrayUtility.GetValueWithIndex(list, key.Index.Value);
 						objects.Add(value);
 					}
 				}
@@ -381,7 +334,7 @@ namespace PartsTreeSystem
 					}
 					else if (k.Name == Consts.Data)
 					{
-						SetValueToIndex(objects[i], objects[i + 1], k.Index.Value);
+						ArrayUtility.SetValueToIndex(objects[i], objects[i + 1], k.Index.Value);
 					}
 					else
 					{

@@ -212,7 +212,7 @@ namespace PartsTreeSystemExample
 							var count = array.Length;
 							if (Altseed2.Engine.Tool.DragInt(name, ref count, 1, 0, 100, "%d", Altseed2.ToolSliderFlags.None))
 							{
-								var next = PartsTreeSystem.EditorUtility.ResizeArray(array, count);
+								var next = PartsTreeSystem.ArrayUtility.ResizeArray(array, count);
 								elementGetterSetterArray.SetValue(next);
 								context.CommandManager.NotifyEditFields(selectedNode);
 							}
@@ -230,7 +230,7 @@ namespace PartsTreeSystemExample
 							var count = v.Count;
 							if (Altseed2.Engine.Tool.DragInt(name, ref count, 1, 0, 100, "%d", Altseed2.ToolSliderFlags.None))
 							{
-								PartsTreeSystem.EditorUtility.ResizeList(v, count);
+								PartsTreeSystem.ArrayUtility.ResizeList(v, count);
 
 								context.CommandManager.NotifyEditFields(selectedNode);
 							}

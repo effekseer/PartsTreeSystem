@@ -42,7 +42,7 @@ namespace PartsTreeSystem
 				}
 				else if (index.HasValue)
 				{
-					EditorUtility.SetValueToIndex(parent, value, index.Value);
+					ArrayUtility.SetValueToIndex(parent, value, index.Value);
 				}
 			}
 		}
@@ -104,7 +104,7 @@ namespace PartsTreeSystem
 			}
 			else if (elm.index.HasValue)
 			{
-				return EditorUtility.GetValueWithIndex(elm.parent, elm.index.Value);
+				return ArrayUtility.GetValueWithIndex(elm.parent, elm.index.Value);
 			}
 
 			return null;
@@ -121,7 +121,7 @@ namespace PartsTreeSystem
 			}
 			else if (elm.index.HasValue)
 			{
-				EditorUtility.SetValueToIndex(elm.parent, value, elm.index.Value);
+				ArrayUtility.SetValueToIndex(elm.parent, value, elm.index.Value);
 			}
 
 			for (int i = currentIndex; i > 0; i--)
@@ -131,99 +131,6 @@ namespace PartsTreeSystem
 					break;
 				}
 				elements[i - 1].SetValue(elements[i].parent);
-			}
-		}
-	}
-
-	public class EditorUtility
-	{
-		public static Array ResizeArray(Array list, int count)
-		{
-			var elmType = list.GetType().GetElementType();
-			var array = Array.CreateInstance(elmType, count);
-
-			for (int i = 0; i < Math.Min(list.Length, count); i++)
-			{
-				array.SetValue(list.GetValue(i), i);
-			}
-
-			for (int i = list.Length; i < count; i++)
-			{
-				array.SetValue(CreateDefaultValue(elmType), i);
-			}
-
-			return array;
-		}
-
-		public static void ResizeList(IList list, int count)
-		{
-			var elmType = list.GetType().GetGenericArguments()[0];
-			while (list.Count < count)
-			{
-				list.Add(CreateDefaultValue(elmType));
-			}
-
-			while (list.Count > count)
-			{
-				list.RemoveAt(list.Count - 1);
-			}
-		}
-
-		public static object GetValueWithIndex(object target, int index)
-		{
-			if (target is Array array)
-			{
-				return array.GetValue(index);
-			}
-
-			foreach (var pi in target.GetType().GetProperties())
-			{
-				if (pi.GetIndexParameters().Length != 1)
-				{
-					continue;
-				}
-
-				return pi.GetValue(target, new object[] { index });
-			}
-			return null;
-		}
-
-		public static bool SetValueToIndex(object target, object value, int index)
-		{
-			if (target is Array array)
-			{
-				array.SetValue(value, index);
-				return true;
-			}
-
-			foreach (var pi in target.GetType().GetProperties())
-			{
-				if (pi.GetIndexParameters().Length != 1)
-				{
-					continue;
-				}
-
-				pi.SetValue(target, value, new object[] { index });
-				return true;
-			}
-			return false;
-		}
-
-		public static object CreateDefaultValue(Type type)
-		{
-			if (type.IsValueType)
-			{
-				return Activator.CreateInstance(type);
-			}
-			else
-			{
-				var constructor = type.GetConstructor(new Type[] { });
-				if (constructor == null)
-				{
-					return null;
-				}
-
-				return constructor.Invoke(null);
 			}
 		}
 	}

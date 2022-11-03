@@ -33,6 +33,11 @@ namespace PartsTreeSystemTest
 		public System.Collections.Generic.List<int> Values = new System.Collections.Generic.List<int>();
 	}
 
+	class TestArray1
+	{
+		public int[] Array = new int[0];
+	}
+
 	class TestNodeStruct : Node
 	{
 		public TestStruct1 Struct1;
@@ -160,6 +165,32 @@ namespace PartsTreeSystemTest
 			var diff2 = after.GenerateDifference(before);
 			Assert.AreEqual(2, diff2.Modifications.Count);
 		}
+
+
+		[Test]
+		public void DiffArray()
+		{
+			var env = new Environment();
+			var v = new TestArray1();
+			v.Array = new int[3];
+			v.Array[1] = 1;
+
+			var before = new FieldState();
+			before.Store(v, env);
+
+			v.Array = new int[2];
+			v.Array[1] = 3;
+
+			var after = new FieldState();
+			after.Store(v, env);
+
+			var diff1 = before.GenerateDifference(after);
+			Assert.AreEqual(3, diff1.Modifications.Count);
+
+			var diff2 = after.GenerateDifference(before);
+			Assert.AreEqual(2, diff2.Modifications.Count);
+		}
+
 
 		[Test]
 		public void DiffProperty()

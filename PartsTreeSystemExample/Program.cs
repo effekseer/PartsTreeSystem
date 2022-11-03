@@ -207,6 +207,23 @@ namespace PartsTreeSystemExample
 								elementGetterSetterArray.Pop();
 							}
 						}
+						else if (value is Array array)
+						{
+							var count = array.Length;
+							if (Altseed2.Engine.Tool.DragInt(name, ref count, 1, 0, 100, "%d", Altseed2.ToolSliderFlags.None))
+							{
+								var next = PartsTreeSystem.EditorUtility.ResizeArray(array, count);
+								elementGetterSetterArray.SetValue(next);
+								context.CommandManager.NotifyEditFields(selectedNode);
+							}
+
+							for (int i = 0; i < array.Length; i++)
+							{
+								elementGetterSetterArray.Push(array, i);
+								updateFields(context, selectedNode, elementGetterSetterArray);
+								elementGetterSetterArray.Pop();
+							}
+						}
 						else if (value is IList)
 						{
 							var v = (IList)value;
@@ -498,6 +515,7 @@ namespace PartsTreeSystemExample
 			public Vector3 Value3;
 			public Parameter Param1 = new Parameter();
 			public List<int> List1 = new List<int>();
+			public int[] Array1 = new int[0];
 		}
 	}
 

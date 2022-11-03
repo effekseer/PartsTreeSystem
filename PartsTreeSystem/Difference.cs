@@ -198,15 +198,18 @@ namespace PartsTreeSystem
 			for (int i = 0; i < keys.Length; i++)
 			{
 				var key = keys[i];
-
 				var obj = objects[objects.Count - 1];
 
 				if (key.Name == Consts.Size)
 				{
 					lastType = null;
 
-					var o = objects[objects.Count - 1];
-					if (o is IList list)
+					if (obj is Array array)
+					{
+						var count = Convert.ToInt64(modification.Value);
+						objects[objects.Count - 1] = EditorUtility.ResizeArray(array, (int)count);
+					}
+					else if (obj is IList list)
 					{
 						var count = Convert.ToInt64(modification.Value);
 						if (list.Count > count)
@@ -216,7 +219,7 @@ namespace PartsTreeSystem
 
 						while (list.Count < count)
 						{
-							var type = o.GetType().GetGenericArguments()[0];
+							var type = obj.GetType().GetGenericArguments()[0];
 							var newValue = CreateDefaultValue(type);
 							list.Add(newValue);
 						}
@@ -229,7 +232,14 @@ namespace PartsTreeSystem
 				{
 					lastType = null;
 
-					if (objects[objects.Count - 1] is IList list)
+					if (obj is Array array)
+					{
+						lastType = array.GetType().GetElementType();
+
+						var value = GetValueWithIndex(array, key.Index.Value);
+						objects.Add(value);
+					}
+					else if (obj is IList list)
 					{
 						lastType = list.GetType().GenericTypeArguments[0];
 

@@ -60,7 +60,7 @@ namespace PartsTreeSystem
 			{
 				return o;
 			}
-			else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
+			else if (type.GetInterfaces().Contains(typeof(IList)))
 			{
 				var list = (IList)o;
 				var values = new List<Element>();

@@ -137,11 +137,30 @@ namespace PartsTreeSystem
 
 	public class EditorUtility
 	{
+		public static Array ResizeArray(Array list, int count)
+		{
+			var elmType = list.GetType().GetElementType();
+			var array = Array.CreateInstance(elmType, count);
+
+			for (int i = 0; i < Math.Min(list.Length, count); i++)
+			{
+				array.SetValue(list.GetValue(i), i);
+			}
+
+			for (int i = list.Length; i < count; i++)
+			{
+				array.SetValue(CreateDefaultValue(elmType), i);
+			}
+
+			return array;
+		}
+
 		public static void ResizeList(IList list, int count)
 		{
+			var elmType = list.GetType().GetGenericArguments()[0];
 			while (list.Count < count)
 			{
-				list.Add(CreateDefaultValue(list.GetType().GetGenericArguments()[0]));
+				list.Add(CreateDefaultValue(elmType));
 			}
 
 			while (list.Count > count)
@@ -152,6 +171,11 @@ namespace PartsTreeSystem
 
 		public static object GetValueWithIndex(object target, int index)
 		{
+			if (target is Array array)
+			{
+				return array.GetValue(index);
+			}
+
 			foreach (var pi in target.GetType().GetProperties())
 			{
 				if (pi.GetIndexParameters().Length != 1)
@@ -166,6 +190,12 @@ namespace PartsTreeSystem
 
 		public static bool SetValueToIndex(object target, object value, int index)
 		{
+			if (target is Array array)
+			{
+				array.SetValue(value, index);
+				return true;
+			}
+
 			foreach (var pi in target.GetType().GetProperties())
 			{
 				if (pi.GetIndexParameters().Length != 1)

@@ -6,7 +6,7 @@ using PartsTreeSystem;
 
 namespace PartsTreeSystemTest
 {
-	public class UndoRedo
+	public class NodeUndoRedo
 	{
 		[SetUp]
 		public void Setup()

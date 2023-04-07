@@ -94,25 +94,30 @@ namespace PartsTreeSystem
 
 		public override void Execute(Environment env)
 		{
-			var instance = Container.FindInstance(InstanceID);
-			if (instance != null)
-			{
-				object obj = instance;
-				Difference.ApplyDifference(ref obj, DiffRedo, Asset, Container, env);
-			}
+			object target = GetTarget();
+			Difference.ApplyDifference(ref target, DiffRedo, Container, env);
 
 			Asset.SetDifference(InstanceID, NewDifference);
 		}
+
 		public override void Unexecute(Environment env)
 		{
-			var instance = Container.FindInstance(InstanceID);
-			if (instance != null)
-			{
-				object obj = instance;
-				Difference.ApplyDifference(ref obj, DiffUndo, Asset, Container, env);
-			}
+			object target = GetTarget();
+			Difference.ApplyDifference(ref target, DiffUndo, Container, env);
 
 			Asset.SetDifference(InstanceID, OldDifference);
+		}
+
+		object GetTarget()
+		{
+			if (Container != null)
+			{
+				return Container.FindInstance(InstanceID);
+			}
+			else
+			{
+				return Asset;
+			}
 		}
 
 		public static ValueChangeCommand Merge(ValueChangeCommand first, ValueChangeCommand second)
@@ -580,6 +585,66 @@ namespace PartsTreeSystem
 			command.Detail = string.Empty;
 
 			AddCommand(command);
+		}
+
+		public void StartEditFields(Asset asset, Environment environment)
+		{
+			var state = new EditFieldState { Asset = asset };
+			state.State.Store(asset, environment);
+			editFieldStates.Add(asset, state);
+		}
+
+		public void NotifyEditFields(Asset asset)
+		{
+			if (editFieldStates.TryGetValue(asset, out var v))
+			{
+				v.IsEdited = true;
+			}
+		}
+
+		public bool EndEditFields(Asset asset, Environment environment)
+		{
+			if (editFieldStates.TryGetValue(asset, out var v))
+			{
+				if (v.IsEdited)
+				{
+					var instanceID = -1;
+
+					var fs = new FieldState();
+					fs.Store(asset, environment);
+					var diffUndo = v.State.GenerateDifference(fs);
+					var diffRedo = fs.GenerateDifference(v.State);
+
+					var oldDifference = asset.GetDifference(instanceID);
+
+					Difference newDifference;
+					if (oldDifference != null)
+					{
+						newDifference = Difference.MergeDifference(diffRedo, oldDifference);
+					}
+					else
+					{
+						newDifference = diffRedo;
+					}
+
+					asset.SetDifference(instanceID, newDifference);
+
+					var command = new ValueChangeCommand();
+					command.Asset = asset;
+					command.InstanceID = instanceID;
+					command.DiffRedo = diffRedo;
+					command.DiffUndo = diffUndo;
+					command.NewDifference = newDifference;
+					command.OldDifference = oldDifference;
+					AddCommand(command);
+				}
+
+				editFieldStates.Remove(asset);
+
+				return v.IsEdited;
+			}
+
+			return false;
 		}
 
 		public void StartEditFields(Asset asset, IInstanceContainer instanceContainer, IInstance editedInstance, Environment environment)

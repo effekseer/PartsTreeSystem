@@ -281,7 +281,7 @@ namespace PartsTreeSystem
 
 					var targetNode = findNode(difference.Key, node);
 					var target = (object)targetNode;
-					Difference.ApplyDifference(ref target, difference.Value, nodeTreeGroup, ret, env);
+					Difference.ApplyDifference(ref target, difference.Value, ret, env);
 				}
 
 			}

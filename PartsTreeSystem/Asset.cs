@@ -6,8 +6,10 @@ namespace PartsTreeSystem
 {
 	public class Asset
 	{
-		internal virtual Difference GetDifference(int instanceID) { return null; }
-		internal virtual void SetDifference(int instanceID, Difference difference) { }
+		Difference difference = null;
+
+		internal virtual Difference GetDifference(int instanceID) { return difference; }
+		internal virtual void SetDifference(int instanceID, Difference difference) { this.difference = difference; }
 	}
 
 }

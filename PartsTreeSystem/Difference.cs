@@ -279,7 +279,7 @@ namespace PartsTreeSystem
 			return new Hierarchy { Objects = objects, LastType = lastType };
 		}
 
-		public static void ApplyDifference(ref object target, Difference difference, Asset asset, IInstanceContainer instanceContainer, Environment env)
+		public static void ApplyDifference(ref object target, Difference difference, IInstanceContainer instanceContainer, Environment env)
 		{
 			foreach (var modification in difference.modifications)
 			{
